@@ -16,7 +16,7 @@ export default function Navbar() {
       <div className="mx-auto max-w-6xl px-6">
         <div className="flex h-16 items-center justify-between">
           <a href="#" className="text-lg font-semibold tracking-tight text-foreground">
-            MonSite
+            BrawlAlly
           </a>
 
           <ul className="hidden md:flex items-center gap-1">
