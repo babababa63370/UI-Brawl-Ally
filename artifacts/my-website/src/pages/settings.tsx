@@ -222,29 +222,19 @@ export default function Settings() {
                     )}
 
                     {!playerLoading && player && (
-                      <div className="flex items-center gap-4 px-4 py-3">
+                      <div className="flex items-center gap-3 px-4 py-3">
                         <img
                           src={player.icon.url}
                           alt="Icône joueur"
-                          className="w-12 h-12 rounded-lg object-contain bg-background/40 p-0.5"
+                          className="w-10 h-10 rounded-lg object-contain bg-background/40 p-0.5"
                           onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                         />
-                        <div className="flex-1 min-w-0">
-                          <p
-                            className="font-semibold truncate"
-                            style={player.nameColor ? { color: `#${player.nameColor.replace(/^0x/, "")}` } : undefined}
-                          >
-                            {player.name}
-                          </p>
-                          <p className="font-mono text-xs text-muted-foreground">{player.tag}</p>
-                          {player.club?.name && (
-                            <p className="text-xs text-muted-foreground truncate">{player.club.name}</p>
-                          )}
-                        </div>
-                        <div className="text-right shrink-0">
-                          <p className="text-sm font-bold text-foreground">🏆 {player.trophies.toLocaleString()}</p>
-                          <p className="text-xs text-muted-foreground">Niv. {player.expLevel}</p>
-                        </div>
+                        <p
+                          className="font-semibold truncate"
+                          style={player.nameColor ? { color: `#${player.nameColor.replace(/^0x/, "")}` } : undefined}
+                        >
+                          {player.name}
+                        </p>
                       </div>
                     )}
 
