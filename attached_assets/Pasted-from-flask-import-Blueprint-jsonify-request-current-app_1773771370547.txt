@@ -1,0 +1,195 @@
+from flask import Blueprint, jsonify, request, current_app
+import psycopg2
+import psycopg2.extras
+import os
+from functools import wraps
+
+discord_bp = Blueprint('discord', __name__)
+
+# ------------------------------------------------------------------
+# Connexion PostgreSQL
+# ------------------------------------------------------------------
+
+def get_db():
+    return psycopg2.connect(
+        os.getenv("POSTGRES_URL"),
+        cursor_factory=psycopg2.extras.RealDictCursor
+    )
+
+
+def init_db():
+    """Crée la table si elle n'existe pas. À appeler au démarrage."""
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS discord_links (
+                    discord_id  TEXT PRIMARY KEY,
+                    brawl_tag   TEXT NOT NULL,
+                    linked_at   TIMESTAMP DEFAULT NOW()
+                )
+            """)
+        conn.commit()
+
+
+# ------------------------------------------------------------------
+# Middleware : vérification de la clé API
+# ------------------------------------------------------------------
+
+def require_api_key(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        key = request.headers.get("X-API-Key") or request.args.get("api_key")
+        if not key or key != os.getenv("DISCORD_API_KEY"):
+            return jsonify({"error": "Clé API invalide ou manquante"}), 401
+        return f(*args, **kwargs)
+    return decorated
+
+
+# ------------------------------------------------------------------
+# GET /api/discord/<discord_id>
+# Retourne le tag Brawl Stars lié à un Discord ID
+# ------------------------------------------------------------------
+@discord_bp.route('/discord/<string:discord_id>')
+@require_api_key
+def get_by_discord(discord_id):
+    try:
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT * FROM discord_links WHERE discord_id = %s",
+                    (discord_id,)
+                )
+                row = cur.fetchone()
+    except Exception as e:
+        return jsonify({"error": f"Erreur base de données : {str(e)}"}), 500
+
+    if not row:
+        return jsonify({"error": "Aucune liaison trouvée pour ce Discord ID"}), 404
+
+    return jsonify({"link": dict(row)})
+
+
+# ------------------------------------------------------------------
+# GET /api/discord/tag/<brawl_tag>
+# Retourne le Discord ID lié à un tag Brawl Stars
+# ------------------------------------------------------------------
+@discord_bp.route('/discord/tag/<string:brawl_tag>')
+@require_api_key
+def get_by_tag(brawl_tag):
+    tag = brawl_tag.strip("#").upper()
+    try:
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT * FROM discord_links WHERE brawl_tag = %s",
+                    (tag,)
+                )
+                row = cur.fetchone()
+    except Exception as e:
+        return jsonify({"error": f"Erreur base de données : {str(e)}"}), 500
+
+    if not row:
+        return jsonify({"error": "Aucune liaison trouvée pour ce tag"}), 404
+
+    return jsonify({"link": dict(row)})
+
+
+# ------------------------------------------------------------------
+# POST /api/discord/link
+# Crée ou met à jour une liaison discord_id <-> brawl_tag
+# Body JSON : { "discord_id": "...", "brawl_tag": "..." }
+# ------------------------------------------------------------------
+@discord_bp.route('/discord/link', methods=['POST'])
+@require_api_key
+def link():
+    body = request.get_json(silent=True)
+    if not body:
+        return jsonify({"error": "Body JSON manquant"}), 400
+
+    discord_id = body.get("discord_id", "").strip()
+    brawl_tag = body.get("brawl_tag", "").strip("#").upper()
+
+    if not discord_id or not brawl_tag:
+        return jsonify({"error": "discord_id et brawl_tag sont requis"}), 400
+
+    try:
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                # Upsert : update si discord_id existe déjà
+                cur.execute("""
+                    INSERT INTO discord_links (discord_id, brawl_tag)
+                    VALUES (%s, %s)
+                    ON CONFLICT (discord_id) DO UPDATE
+                        SET brawl_tag = EXCLUDED.brawl_tag,
+                            linked_at = NOW()
+                    RETURNING *
+                """, (discord_id, brawl_tag))
+                row = cur.fetchone()
+            conn.commit()
+    except Exception as e:
+        return jsonify({"error": f"Erreur base de données : {str(e)}"}), 500
+
+    return jsonify({"message": "Liaison créée avec succès", "link": dict(row)}), 201
+
+
+# ------------------------------------------------------------------
+# DELETE /api/discord/unlink
+# Supprime une liaison
+# Body JSON : { "discord_id": "..." }  OU  { "brawl_tag": "..." }
+# ------------------------------------------------------------------
+@discord_bp.route('/discord/unlink', methods=['DELETE'])
+@require_api_key
+def unlink():
+    body = request.get_json(silent=True)
+    if not body:
+        return jsonify({"error": "Body JSON manquant"}), 400
+
+    discord_id = body.get("discord_id", "").strip()
+    brawl_tag = body.get("brawl_tag", "").strip("#").upper()
+
+    if not discord_id and not brawl_tag:
+        return jsonify({"error": "discord_id ou brawl_tag requis"}), 400
+
+    try:
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                if discord_id:
+                    cur.execute(
+                        "DELETE FROM discord_links WHERE discord_id = %s RETURNING *",
+                        (discord_id,)
+                    )
+                else:
+                    cur.execute(
+                        "DELETE FROM discord_links WHERE brawl_tag = %s RETURNING *",
+                        (brawl_tag,)
+                    )
+                row = cur.fetchone()
+            conn.commit()
+    except Exception as e:
+        return jsonify({"error": f"Erreur base de données : {str(e)}"}), 500
+
+    if not row:
+        return jsonify({"error": "Aucune liaison trouvée à supprimer"}), 404
+
+    return jsonify({"message": "Liaison supprimée", "link": dict(row)})
+
+
+# ------------------------------------------------------------------
+# GET /api/discord/all
+# Retourne toutes les liaisons (admin)
+# ------------------------------------------------------------------
+@discord_bp.route('/discord/all')
+@require_api_key
+def get_all():
+    try:
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT * FROM discord_links ORDER BY linked_at DESC")
+                rows = cur.fetchall()
+    except Exception as e:
+        return jsonify({"error": f"Erreur base de données : {str(e)}"}), 500
+
+    return jsonify({
+        "links": [dict(r) for r in rows],
+        "total": len(rows)
+    })
