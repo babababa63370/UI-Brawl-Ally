@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Menu, X, ChevronDown } from "lucide-react";
+import { Menu, X, ChevronDown, LogOut, Settings, LogIn } from "lucide-react";
+import { useAuth } from "@/contexts/auth";
 
 type NavItem = {
   label: string;
@@ -8,7 +9,7 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
-  { label: "Accueil", href: "#" },
+  { label: "Accueil", href: "/" },
   {
     label: "Statistiques",
     children: [
@@ -26,10 +27,6 @@ const navItems: NavItem[] = [
     ],
   },
   { label: "Abonnements", href: "#" },
-  {
-    label: "Profil",
-    children: [{ label: "Paramètres", href: "/settings" }],
-  },
 ];
 
 const dropdownAnimation = `
@@ -42,7 +39,7 @@ const dropdownAnimation = `
     to   { opacity: 0; transform: translateY(-6px) scaleY(0.95); }
   }
   .dropdown-enter { animation: dropdownIn  180ms ease forwards; transform-origin: top; }
-  .dropdown-leave { animation: dropdownOut 140ms ease forwards; transform-origin: top; }
+  .dropdown-leave { animation: dropdownOut 400ms ease forwards; transform-origin: top; }
 `;
 
 function DropdownMenu({
@@ -80,10 +77,10 @@ function DropdownMenu({
   );
 }
 
-function NavItemDesktop({ item }: { item: NavItem }) {
+function useDropdown() {
   const [open, setOpen] = useState(false);
   const [closing, setClosing] = useState(false);
-  const ref = useRef<HTMLLIElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -103,9 +100,7 @@ function NavItemDesktop({ item }: { item: NavItem }) {
 
   const handleMouseEnter = useCallback(() => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
-    hoverTimer.current = setTimeout(() => {
-      openMenu();
-    }, 1200);
+    hoverTimer.current = setTimeout(() => openMenu(), 1200);
   }, [openMenu]);
 
   const handleMouseLeave = useCallback(() => {
@@ -115,9 +110,7 @@ function NavItemDesktop({ item }: { item: NavItem }) {
 
   useEffect(() => {
     function handler(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        closeMenu();
-      }
+      if (ref.current && !ref.current.contains(e.target as Node)) closeMenu();
     }
     document.addEventListener("mousedown", handler);
     return () => {
@@ -126,6 +119,13 @@ function NavItemDesktop({ item }: { item: NavItem }) {
       if (closeTimer.current) clearTimeout(closeTimer.current);
     };
   }, [closeMenu]);
+
+  return { open, closing, ref, openMenu, closeMenu, handleMouseEnter, handleMouseLeave };
+}
+
+function NavItemDesktop({ item }: { item: NavItem }) {
+  const { open, closing, ref, openMenu, closeMenu, handleMouseEnter, handleMouseLeave } =
+    useDropdown();
 
   if (!item.children) {
     return (
@@ -142,7 +142,7 @@ function NavItemDesktop({ item }: { item: NavItem }) {
 
   return (
     <li
-      ref={ref}
+      ref={ref as React.RefObject<HTMLLIElement>}
       className="relative"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -162,28 +162,124 @@ function NavItemDesktop({ item }: { item: NavItem }) {
   );
 }
 
+function ProfileButton() {
+  const { auth, logout, loginUrl } = useAuth();
+  const { open, closing, ref, openMenu, closeMenu, handleMouseEnter, handleMouseLeave } =
+    useDropdown();
+
+  if (auth.status === "loading") {
+    return (
+      <div className="w-8 h-8 rounded-full bg-accent animate-pulse" />
+    );
+  }
+
+  if (auth.status === "unauthenticated") {
+    return (
+      <a
+        href={loginUrl}
+        className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors border border-border/50"
+      >
+        <LogIn size={14} />
+        Se connecter
+      </a>
+    );
+  }
+
+  const user = auth.user;
+
+  return (
+    <div
+      ref={ref}
+      className="relative"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <button
+        onClick={() => (open && !closing ? closeMenu() : openMenu())}
+        className="flex items-center gap-2 pl-1 pr-3 py-1 rounded-full hover:bg-accent transition-colors"
+      >
+        {user.avatar ? (
+          <img src={user.avatar} alt={user.displayName} className="w-7 h-7 rounded-full" />
+        ) : (
+          <div className="w-7 h-7 rounded-full bg-[#5865F2]/30 flex items-center justify-center text-[10px] font-bold text-[#5865F2]">
+            {user.displayName[0].toUpperCase()}
+          </div>
+        )}
+        <span className="text-sm text-foreground max-w-[100px] truncate">{user.displayName}</span>
+        <ChevronDown
+          size={13}
+          className={`text-muted-foreground transition-transform duration-200 ${open && !closing ? "rotate-180" : ""}`}
+        />
+      </button>
+
+      {open && (
+        <div
+          className={`absolute top-full right-0 mt-2 min-w-[180px] rounded-lg border border-border/60 bg-card/95 backdrop-blur-md shadow-lg py-1 z-50 ${
+            closing ? "dropdown-leave" : "dropdown-enter"
+          }`}
+        >
+          <div className="px-4 py-2 border-b border-border/50 mb-1">
+            <p className="text-xs font-medium text-foreground truncate">{user.displayName}</p>
+            <p className="text-xs text-muted-foreground truncate">@{user.username}</p>
+          </div>
+          <a
+            href="/settings"
+            className="flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+          >
+            <Settings size={14} />
+            Paramètres
+          </a>
+          <button
+            onClick={() => { closeMenu(); logout(); }}
+            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+          >
+            <LogOut size={14} />
+            Se déconnecter
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
+  const { auth, logout, loginUrl } = useAuth();
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-md">
       <style>{dropdownAnimation}</style>
       <div className="mx-auto max-w-6xl px-6">
         <div className="flex h-16 items-center justify-between">
-          <a href="#" className="flex items-center gap-2.5">
-            <img src="http://cdn.meonix.me/cdn/logo/bt.png" alt="BrawlAlly" className="h-8 w-8 rounded-lg object-cover" />
-            <span style={{ fontFamily: "'Orbitron', sans-serif" }} className="text-base font-bold tracking-wide text-foreground">
+          {/* Logo */}
+          <a href="/" className="flex items-center gap-2.5">
+            <img
+              src="http://cdn.meonix.me/cdn/logo/bt.png"
+              alt="BrawlAlly"
+              className="h-8 w-8 rounded-lg object-cover"
+            />
+            <span
+              style={{ fontFamily: "'Orbitron', sans-serif" }}
+              className="text-base font-bold tracking-wide text-foreground"
+            >
               BrawlAlly
             </span>
           </a>
 
+          {/* Desktop nav */}
           <ul className="hidden md:flex items-center gap-1">
             {navItems.map((item) => (
               <NavItemDesktop key={item.label} item={item} />
             ))}
           </ul>
 
+          {/* Profile / login */}
+          <div className="hidden md:flex items-center">
+            <ProfileButton />
+          </div>
+
+          {/* Mobile burger */}
           <button
             className="md:hidden p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
             onClick={() => setMobileOpen((v) => !v)}
@@ -194,6 +290,7 @@ export default function Navbar() {
         </div>
       </div>
 
+      {/* Mobile menu */}
       {mobileOpen && (
         <div className="md:hidden border-t border-border/50 bg-background/95 backdrop-blur-md px-6 py-4">
           <ul className="flex flex-col gap-1">
@@ -250,6 +347,45 @@ export default function Navbar() {
                 )}
               </li>
             ))}
+
+            {/* Mobile profile section */}
+            <li className="mt-2 pt-2 border-t border-border/50">
+              {auth.status === "authenticated" ? (
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 px-4 py-2">
+                    {auth.user.avatar ? (
+                      <img src={auth.user.avatar} className="w-7 h-7 rounded-full" alt="" />
+                    ) : (
+                      <div className="w-7 h-7 rounded-full bg-[#5865F2]/30 flex items-center justify-center text-xs font-bold text-[#5865F2]">
+                        {auth.user.displayName[0].toUpperCase()}
+                      </div>
+                    )}
+                    <span className="text-sm text-foreground">{auth.user.displayName}</span>
+                  </div>
+                  <a
+                    href="/settings"
+                    className="flex items-center gap-2 px-4 py-2 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    <Settings size={14} /> Paramètres
+                  </a>
+                  <button
+                    onClick={() => { setMobileOpen(false); logout(); }}
+                    className="w-full flex items-center gap-2 px-4 py-2 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                  >
+                    <LogOut size={14} /> Se déconnecter
+                  </button>
+                </div>
+              ) : (
+                <a
+                  href={loginUrl}
+                  className="flex items-center gap-2 px-4 py-2 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  <LogIn size={14} /> Se connecter avec Discord
+                </a>
+              )}
+            </li>
           </ul>
         </div>
       )}
