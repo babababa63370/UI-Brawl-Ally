@@ -1,7 +1,7 @@
 import { useAuth } from "@/contexts/auth";
 import Navbar from "@/components/Navbar";
 import BlobBackground from "@/components/BlobBackground";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 function DiscordIcon() {
   return (
@@ -11,28 +11,49 @@ function DiscordIcon() {
   );
 }
 
-function BrawlIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-    </svg>
-  );
-}
+type BrawlLink = { discord_id: string; brawl_tag: string; linked_at: string } | null;
 
-type BrawlLink = {
-  discord_id: string;
-  brawl_tag: string;
-  linked_at: string;
-} | null;
+type PlayerInfo = {
+  tag: string;
+  name: string;
+  nameColor?: string;
+  icon: { id: number; url: string };
+  trophies: number;
+  highestTrophies: number;
+  expLevel: number;
+  club?: { name?: string };
+};
 
 export default function Settings() {
   const { auth, logout, loginUrl } = useAuth();
   const [brawlLink, setBrawlLink] = useState<BrawlLink>(null);
   const [brawlLoading, setBrawlLoading] = useState(false);
+  const [player, setPlayer] = useState<PlayerInfo | null>(null);
+  const [playerError, setPlayerError] = useState<string | null>(null);
+  const [playerLoading, setPlayerLoading] = useState(false);
   const [tagInput, setTagInput] = useState("");
   const [saving, setSaving] = useState(false);
   const [unlinking, setUnlinking] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
+  const fetchPlayer = useCallback(async (tag: string) => {
+    setPlayerLoading(true);
+    setPlayerError(null);
+    setPlayer(null);
+    try {
+      const r = await fetch(`/api/brawl/player/${encodeURIComponent(tag)}`, { credentials: "include" });
+      const data = await r.json();
+      if (r.ok && data.player) {
+        setPlayer(data.player);
+      } else {
+        setPlayerError(data.error ?? "Joueur introuvable");
+      }
+    } catch {
+      setPlayerError("Impossible de contacter l'API Brawl Stars");
+    } finally {
+      setPlayerLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (auth.status !== "authenticated") return;
@@ -40,12 +61,16 @@ export default function Settings() {
     fetch("/api/brawl/me", { credentials: "include" })
       .then((r) => r.json())
       .then((data) => {
-        setBrawlLink(data.link ?? null);
-        if (data.link) setTagInput(data.link.brawl_tag);
+        const link = data.link ?? null;
+        setBrawlLink(link);
+        if (link) {
+          setTagInput(link.brawl_tag);
+          fetchPlayer(link.brawl_tag);
+        }
       })
       .catch(() => setBrawlLink(null))
       .finally(() => setBrawlLoading(false));
-  }, [auth.status]);
+  }, [auth.status, fetchPlayer]);
 
   const handleLink = async () => {
     const tag = tagInput.trim().replace(/^#/, "").toUpperCase();
@@ -64,6 +89,7 @@ export default function Settings() {
         setBrawlLink(data.link);
         setTagInput(data.link.brawl_tag);
         setFeedback({ type: "success", message: "Tag Brawl Stars lié avec succès !" });
+        fetchPlayer(data.link.brawl_tag);
       } else {
         setFeedback({ type: "error", message: data.error ?? "Erreur lors de la liaison." });
       }
@@ -85,6 +111,8 @@ export default function Settings() {
       if (r.ok) {
         setBrawlLink(null);
         setTagInput("");
+        setPlayer(null);
+        setPlayerError(null);
         setFeedback({ type: "success", message: "Tag dissocié avec succès." });
       } else {
         const data = await r.json();
@@ -155,11 +183,7 @@ export default function Settings() {
             </h2>
             <div className="flex items-center gap-4">
               {user.avatar ? (
-                <img
-                  src={user.avatar}
-                  alt={user.displayName}
-                  className="w-14 h-14 rounded-full border border-border/60"
-                />
+                <img src={user.avatar} alt={user.displayName} className="w-14 h-14 rounded-full border border-border/60" />
               ) : (
                 <div className="w-14 h-14 rounded-full bg-[#5865F2]/20 flex items-center justify-center text-[#5865F2]">
                   <DiscordIcon />
@@ -168,9 +192,7 @@ export default function Settings() {
               <div>
                 <p className="font-medium text-foreground">{user.displayName}</p>
                 <p className="text-sm text-muted-foreground">@{user.username}</p>
-                {user.email && (
-                  <p className="text-xs text-muted-foreground mt-0.5">{user.email}</p>
-                )}
+                {user.email && <p className="text-xs text-muted-foreground mt-0.5">{user.email}</p>}
               </div>
             </div>
           </div>
@@ -188,18 +210,57 @@ export default function Settings() {
               </div>
             ) : (
               <div className="space-y-4">
+
+                {/* Player card when linked */}
                 {brawlLink && (
-                  <div className="flex items-center gap-3 rounded-lg bg-accent/40 border border-border/40 px-4 py-3">
-                    <div className="w-8 h-8 rounded-lg bg-yellow-500/20 flex items-center justify-center text-yellow-500">
-                      <BrawlIcon />
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Tag actuel</p>
-                      <p className="font-mono font-semibold text-foreground">#{brawlLink.brawl_tag}</p>
-                    </div>
+                  <div className="rounded-lg border border-border/40 bg-accent/30 overflow-hidden">
+                    {playerLoading && (
+                      <div className="flex items-center gap-2 px-4 py-3 text-sm text-muted-foreground">
+                        <div className="w-4 h-4 rounded-full border-2 border-muted border-t-foreground animate-spin" />
+                        Chargement du profil…
+                      </div>
+                    )}
+
+                    {!playerLoading && player && (
+                      <div className="flex items-center gap-4 px-4 py-3">
+                        <img
+                          src={player.icon.url}
+                          alt="Icône joueur"
+                          className="w-12 h-12 rounded-lg object-contain bg-background/40 p-0.5"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p
+                            className="font-semibold truncate"
+                            style={player.nameColor ? { color: `#${player.nameColor.replace(/^0x/, "")}` } : undefined}
+                          >
+                            {player.name}
+                          </p>
+                          <p className="font-mono text-xs text-muted-foreground">{player.tag}</p>
+                          {player.club?.name && (
+                            <p className="text-xs text-muted-foreground truncate">{player.club.name}</p>
+                          )}
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-sm font-bold text-foreground">🏆 {player.trophies.toLocaleString()}</p>
+                          <p className="text-xs text-muted-foreground">Niv. {player.expLevel}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {!playerLoading && playerError && (
+                      <div className="flex items-center gap-2 px-4 py-3">
+                        <span className="text-destructive text-lg">⚠️</span>
+                        <div>
+                          <p className="text-sm font-medium text-foreground">Profil inaccessible</p>
+                          <p className="text-xs text-muted-foreground">{playerError}</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
+                {/* Tag input */}
                 <div className="flex gap-2">
                   <div className="relative flex-1">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-mono text-sm">#</span>
@@ -216,9 +277,9 @@ export default function Settings() {
                     disabled={saving || !tagInput.trim()}
                     className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {saving ? (
+                    {saving && (
                       <div className="w-3.5 h-3.5 rounded-full border-2 border-primary-foreground/40 border-t-primary-foreground animate-spin" />
-                    ) : null}
+                    )}
                     {brawlLink ? "Mettre à jour" : "Lier"}
                   </button>
                 </div>
@@ -229,9 +290,9 @@ export default function Settings() {
                     disabled={unlinking}
                     className="inline-flex items-center gap-2 text-sm text-destructive hover:text-destructive/80 transition-colors disabled:opacity-50"
                   >
-                    {unlinking ? (
+                    {unlinking && (
                       <div className="w-3.5 h-3.5 rounded-full border-2 border-destructive/30 border-t-destructive animate-spin" />
-                    ) : null}
+                    )}
                     Dissocier le tag
                   </button>
                 )}

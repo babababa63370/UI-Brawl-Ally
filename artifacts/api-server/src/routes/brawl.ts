@@ -41,6 +41,32 @@ router.get("/me", async (req, res) => {
   }
 });
 
+router.get("/player/:tag", async (req, res) => {
+  const session = (req as any).session;
+  if (!session?.user) {
+    return res.status(401).json({ error: "Non connecté" });
+  }
+
+  const tag = req.params.tag.replace(/^#/, "").toUpperCase();
+
+  try {
+    const r = await fetch(`${MEONIX_API}/player/${tag}`, {
+      headers: meonixHeaders(),
+    });
+
+    const data = await r.json();
+
+    if (!r.ok) {
+      return res.status(r.status).json({ error: data.error ?? "Joueur introuvable" });
+    }
+
+    return res.json(data);
+  } catch (err) {
+    console.error("Erreur brawl/player:", err);
+    return res.status(503).json({ error: "Impossible de contacter l'API Brawl Stars" });
+  }
+});
+
 router.post("/link", async (req, res) => {
   const session = (req as any).session;
   if (!session?.user) {
