@@ -5,81 +5,82 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Navbar from "@/components/Navbar";
 import Settings from "@/pages/settings";
+import BlobBackground from "@/components/BlobBackground";
 import { AuthProvider } from "@/contexts/auth";
+import { BarChart2, Trophy, Swords, Users, Search, Settings2, Crown } from "lucide-react";
 
 const queryClient = new QueryClient();
+
+const features = [
+  {
+    icon: BarChart2,
+    title: "Statistiques",
+    subtitle: "Joueurs · Classement · Meta",
+    description: "Description à venir.",
+  },
+  {
+    icon: Search,
+    title: "Club Tracking",
+    subtitle: "Découvrir · Configurer",
+    description: "Description à venir.",
+  },
+  {
+    icon: Crown,
+    title: "Abonnements",
+    subtitle: "Plans & avantages",
+    description: "Description à venir.",
+  },
+  {
+    icon: Users,
+    title: "Profil",
+    subtitle: "Paramètres & compte",
+    description: "Description à venir.",
+  },
+];
 
 function Home() {
   return (
     <div className="min-h-screen w-full bg-background overflow-hidden">
-      <div className="fixed inset-0 pointer-events-none" aria-hidden="true">
-        <div
-          className="blob blob-yellow"
-          style={{
-            position: "absolute",
-            width: 600,
-            height: 600,
-            borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(234,179,8,0.28) 0%, transparent 70%)",
-            filter: "blur(80px)",
-            animation: "blobMove1 12s ease-in-out infinite alternate",
-            top: "-10%",
-            left: "-5%",
-          }}
-        />
-        <div
-          className="blob blob-green"
-          style={{
-            position: "absolute",
-            width: 500,
-            height: 500,
-            borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(34,197,94,0.22) 0%, transparent 70%)",
-            filter: "blur(90px)",
-            animation: "blobMove2 15s ease-in-out infinite alternate",
-            bottom: "-10%",
-            right: "-5%",
-          }}
-        />
-        <div
-          className="blob blob-yellow2"
-          style={{
-            position: "absolute",
-            width: 350,
-            height: 350,
-            borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(234,179,8,0.16) 0%, transparent 70%)",
-            filter: "blur(70px)",
-            animation: "blobMove3 18s ease-in-out infinite alternate",
-            top: "40%",
-            right: "15%",
-          }}
-        />
-      </div>
-
-      <style>{`
-        @keyframes blobMove1 {
-          0%   { transform: translate(0px, 0px) scale(1); }
-          33%  { transform: translate(60px, 40px) scale(1.08); }
-          66%  { transform: translate(30px, 80px) scale(0.95); }
-          100% { transform: translate(80px, 20px) scale(1.05); }
-        }
-        @keyframes blobMove2 {
-          0%   { transform: translate(0px, 0px) scale(1); }
-          33%  { transform: translate(-50px, -60px) scale(1.1); }
-          66%  { transform: translate(-80px, -20px) scale(0.92); }
-          100% { transform: translate(-30px, -70px) scale(1.06); }
-        }
-        @keyframes blobMove3 {
-          0%   { transform: translate(0px, 0px) scale(1); }
-          50%  { transform: translate(-40px, 50px) scale(1.12); }
-          100% { transform: translate(50px, -30px) scale(0.9); }
-        }
-      `}</style>
-
+      <BlobBackground />
       <Navbar />
-      <main className="pt-16 flex items-center justify-center min-h-screen relative z-10">
-        <p className="text-muted-foreground text-sm">Contenu à venir…</p>
+
+      <main className="relative z-10">
+        {/* Hero */}
+        <section className="flex flex-col items-center justify-center pt-32 pb-16 px-4 text-center">
+          <img
+            src="http://cdn.meonix.me/cdn/logo/bt.png"
+            alt="BrawlAlly"
+            className="h-24 w-24 rounded-2xl object-cover shadow-lg mb-6"
+          />
+          <h1
+            style={{ fontFamily: "'Orbitron', sans-serif" }}
+            className="text-4xl sm:text-5xl font-bold text-foreground tracking-wide"
+          >
+            BrawlAlly
+          </h1>
+          <p className="mt-4 text-muted-foreground text-base max-w-md">
+            Description à venir.
+          </p>
+        </section>
+
+        {/* Features */}
+        <section className="px-4 pb-24 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {features.map(({ icon: Icon, title, subtitle, description }) => (
+              <div
+                key={title}
+                className="group rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm p-6 hover:border-border hover:bg-card/80 transition-all duration-200 cursor-pointer"
+              >
+                <div className="mb-4 w-10 h-10 rounded-lg bg-accent flex items-center justify-center text-muted-foreground group-hover:text-foreground transition-colors">
+                  <Icon size={20} />
+                </div>
+                <h3 className="font-semibold text-foreground text-sm">{title}</h3>
+                <p className="text-xs text-muted-foreground mt-0.5 mb-3">{subtitle}</p>
+                <p className="text-xs text-muted-foreground/70 italic">{description}</p>
+              </div>
+            ))}
+          </div>
+        </section>
       </main>
     </div>
   );

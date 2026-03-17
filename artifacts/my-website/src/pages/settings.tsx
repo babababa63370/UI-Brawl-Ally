@@ -1,5 +1,6 @@
 import { useAuth } from "@/contexts/auth";
 import Navbar from "@/components/Navbar";
+import BlobBackground from "@/components/BlobBackground";
 
 function DiscordIcon() {
   return (
@@ -14,9 +15,10 @@ export default function Settings() {
 
   if (auth.status === "loading") {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background overflow-hidden">
+        <BlobBackground />
         <Navbar />
-        <div className="flex items-center justify-center min-h-screen">
+        <div className="flex items-center justify-center min-h-screen relative z-10">
           <div className="w-6 h-6 rounded-full border-2 border-muted border-t-foreground animate-spin" />
         </div>
       </div>
@@ -25,9 +27,10 @@ export default function Settings() {
 
   if (auth.status === "unauthenticated") {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background overflow-hidden">
+        <BlobBackground />
         <Navbar />
-        <div className="flex items-center justify-center min-h-screen px-4">
+        <div className="flex items-center justify-center min-h-screen px-4 relative z-10">
           <div className="w-full max-w-sm rounded-xl border border-border/60 bg-card/80 backdrop-blur-sm p-8 text-center shadow-lg">
             <div className="mb-6">
               <div className="mx-auto mb-4 w-14 h-14 rounded-full bg-[#5865F2]/10 flex items-center justify-center text-[#5865F2]">
@@ -54,9 +57,10 @@ export default function Settings() {
   const user = auth.user;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-hidden">
+      <BlobBackground />
       <Navbar />
-      <div className="px-4 pt-24 pb-16">
+      <div className="px-4 pt-24 pb-16 relative z-10">
         <div className="mx-auto max-w-lg">
           <h1 className="text-2xl font-semibold text-foreground mb-8">Paramètres</h1>
 
