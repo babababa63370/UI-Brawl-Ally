@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Menu, X, ChevronDown } from "lucide-react";
 
 type NavItem = {
@@ -32,13 +32,32 @@ const navItems: NavItem[] = [
   },
 ];
 
+const dropdownAnimation = `
+  @keyframes dropdownIn {
+    from { opacity: 0; transform: translateY(-6px) scaleY(0.95); }
+    to   { opacity: 1; transform: translateY(0)    scaleY(1); }
+  }
+  @keyframes dropdownOut {
+    from { opacity: 1; transform: translateY(0)    scaleY(1); }
+    to   { opacity: 0; transform: translateY(-6px) scaleY(0.95); }
+  }
+  .dropdown-enter { animation: dropdownIn  180ms ease forwards; transform-origin: top; }
+  .dropdown-leave { animation: dropdownOut 140ms ease forwards; transform-origin: top; }
+`;
+
 function DropdownMenu({
   items,
+  closing,
 }: {
   items: { label: string; href?: string; disabled?: boolean }[];
+  closing: boolean;
 }) {
   return (
-    <div className="absolute top-full left-0 mt-1 min-w-[180px] rounded-lg border border-border/60 bg-card/95 backdrop-blur-md shadow-lg py-1 z-50">
+    <div
+      className={`absolute top-full left-0 mt-1 min-w-[180px] rounded-lg border border-border/60 bg-card/95 backdrop-blur-md shadow-lg py-1 z-50 ${
+        closing ? "dropdown-leave" : "dropdown-enter"
+      }`}
+    >
       {items.map((item) =>
         item.disabled ? (
           <span
@@ -63,17 +82,50 @@ function DropdownMenu({
 
 function NavItemDesktop({ item }: { item: NavItem }) {
   const [open, setOpen] = useState(false);
+  const [closing, setClosing] = useState(false);
   const ref = useRef<HTMLLIElement>(null);
+  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const openMenu = useCallback(() => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    setClosing(false);
+    setOpen(true);
+  }, []);
+
+  const closeMenu = useCallback(() => {
+    setClosing(true);
+    closeTimer.current = setTimeout(() => {
+      setOpen(false);
+      setClosing(false);
+    }, 140);
+  }, []);
+
+  const handleMouseEnter = useCallback(() => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    hoverTimer.current = setTimeout(() => {
+      openMenu();
+    }, 1500);
+  }, [openMenu]);
+
+  const handleMouseLeave = useCallback(() => {
+    if (hoverTimer.current) clearTimeout(hoverTimer.current);
+    closeMenu();
+  }, [closeMenu]);
 
   useEffect(() => {
     function handler(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
+        closeMenu();
       }
     }
     document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
+    return () => {
+      document.removeEventListener("mousedown", handler);
+      if (hoverTimer.current) clearTimeout(hoverTimer.current);
+      if (closeTimer.current) clearTimeout(closeTimer.current);
+    };
+  }, [closeMenu]);
 
   if (!item.children) {
     return (
@@ -89,18 +141,23 @@ function NavItemDesktop({ item }: { item: NavItem }) {
   }
 
   return (
-    <li ref={ref} className="relative">
+    <li
+      ref={ref}
+      className="relative"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       <button
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => (open && !closing ? closeMenu() : openMenu())}
         className="px-4 py-2 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors duration-150 flex items-center gap-1"
       >
         {item.label}
         <ChevronDown
           size={14}
-          className={`transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          className={`transition-transform duration-200 ${open && !closing ? "rotate-180" : ""}`}
         />
       </button>
-      {open && <DropdownMenu items={item.children} />}
+      {open && <DropdownMenu items={item.children} closing={closing} />}
     </li>
   );
 }
@@ -111,6 +168,7 @@ export default function Navbar() {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-md">
+      <style>{dropdownAnimation}</style>
       <div className="mx-auto max-w-6xl px-6">
         <div className="flex h-16 items-center justify-between">
           <a href="#" className="text-lg font-semibold tracking-tight text-foreground">
