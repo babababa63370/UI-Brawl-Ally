@@ -105,7 +105,7 @@ function NavItemDesktop({ item }: { item: NavItem }) {
     if (closeTimer.current) clearTimeout(closeTimer.current);
     hoverTimer.current = setTimeout(() => {
       openMenu();
-    }, 1500);
+    }, 800);
   }, [openMenu]);
 
   const handleMouseLeave = useCallback(() => {
