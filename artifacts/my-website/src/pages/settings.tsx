@@ -32,6 +32,7 @@ export default function Settings() {
   const [playerError, setPlayerError] = useState<string | null>(null);
   const [playerLoading, setPlayerLoading] = useState(false);
   const [tagInput, setTagInput] = useState("");
+  const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [unlinking, setUnlinking] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
@@ -89,6 +90,7 @@ export default function Settings() {
         setBrawlLink(data.link);
         setTagInput(data.link.brawl_tag);
         setFeedback({ type: "success", message: "Tag Brawl Stars lié avec succès !" });
+        setEditing(false);
         fetchPlayer(data.link.brawl_tag);
       } else {
         setFeedback({ type: "error", message: data.error ?? "Erreur lors de la liaison." });
@@ -208,49 +210,95 @@ export default function Settings() {
                 <div className="w-4 h-4 rounded-full border-2 border-muted border-t-foreground animate-spin" />
                 Chargement…
               </div>
-            ) : (
+            ) : brawlLink ? (
               <div className="space-y-4">
-
-                {/* Player card when linked */}
-                {brawlLink && (
-                  <div className="rounded-lg border border-border/40 bg-accent/30 overflow-hidden">
-                    {playerLoading && (
-                      <div className="flex items-center gap-2 px-4 py-3 text-sm text-muted-foreground">
-                        <div className="w-4 h-4 rounded-full border-2 border-muted border-t-foreground animate-spin" />
-                        Chargement du profil…
-                      </div>
-                    )}
-
-                    {!playerLoading && player && (
-                      <div className="flex items-center gap-3 px-4 py-3">
-                        <img
-                          src={player.icon.url}
-                          alt="Icône joueur"
-                          className="w-10 h-10 rounded-lg object-contain bg-background/40 p-0.5"
-                          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                        />
+                {/* Player card + Modifier button */}
+                <div className="flex items-center justify-between gap-3 rounded-lg border border-border/40 bg-accent/30 px-4 py-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    {playerLoading ? (
+                      <div className="w-4 h-4 rounded-full border-2 border-muted border-t-foreground animate-spin shrink-0" />
+                    ) : player ? (
+                      <img
+                        src={player.icon.url}
+                        alt="Icône joueur"
+                        className="w-10 h-10 rounded-lg object-contain bg-background/40 p-0.5 shrink-0"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                      />
+                    ) : null}
+                    <div className="min-w-0">
+                      {player && (
                         <p
                           className="font-semibold truncate"
                           style={player.nameColor ? { color: `#${player.nameColor.replace(/^0x/, "")}` } : undefined}
                         >
                           {player.name}
                         </p>
-                      </div>
-                    )}
+                      )}
+                      {playerError && <p className="text-xs text-destructive">{playerError}</p>}
+                      <p className="font-mono text-xs text-muted-foreground">#{brawlLink.brawl_tag}</p>
+                    </div>
+                  </div>
+                  {!editing && (
+                    <button
+                      onClick={() => { setEditing(true); setFeedback(null); }}
+                      className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-border/60 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                    >
+                      Modifier
+                    </button>
+                  )}
+                </div>
 
-                    {!playerLoading && playerError && (
-                      <div className="flex items-center gap-2 px-4 py-3">
-                        <span className="text-destructive text-lg">⚠️</span>
-                        <div>
-                          <p className="text-sm font-medium text-foreground">Profil inaccessible</p>
-                          <p className="text-xs text-muted-foreground">{playerError}</p>
-                        </div>
+                {/* Edit form (shown only in editing mode) */}
+                {editing && (
+                  <div className="space-y-3">
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-mono text-sm">#</span>
+                        <input
+                          type="text"
+                          value={tagInput}
+                          onChange={(e) => setTagInput(e.target.value.replace(/^#/, ""))}
+                          placeholder="NOUVEAU_TAG"
+                          className="w-full pl-7 pr-3 py-2 rounded-lg border border-border/60 bg-background text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring text-foreground placeholder:text-muted-foreground/50"
+                        />
                       </div>
-                    )}
+                      <button
+                        onClick={handleLink}
+                        disabled={saving || !tagInput.trim()}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {saving && <div className="w-3.5 h-3.5 rounded-full border-2 border-primary-foreground/40 border-t-primary-foreground animate-spin" />}
+                        Mettre à jour
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <button
+                        onClick={handleUnlink}
+                        disabled={unlinking}
+                        className="inline-flex items-center gap-1.5 text-sm text-destructive hover:text-destructive/80 transition-colors disabled:opacity-50"
+                      >
+                        {unlinking && <div className="w-3.5 h-3.5 rounded-full border-2 border-destructive/30 border-t-destructive animate-spin" />}
+                        Dissocier
+                      </button>
+                      <button
+                        onClick={() => { setEditing(false); setFeedback(null); setTagInput(brawlLink.brawl_tag); }}
+                        className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        Annuler
+                      </button>
+                    </div>
                   </div>
                 )}
 
-                {/* Tag input */}
+                {feedback && (
+                  <p className={`text-sm ${feedback.type === "success" ? "text-green-500" : "text-destructive"}`}>
+                    {feedback.message}
+                  </p>
+                )}
+              </div>
+            ) : (
+              /* Not linked — show input directly */
+              <div className="space-y-4">
                 <div className="flex gap-2">
                   <div className="relative flex-1">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-mono text-sm">#</span>
@@ -267,26 +315,10 @@ export default function Settings() {
                     disabled={saving || !tagInput.trim()}
                     className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {saving && (
-                      <div className="w-3.5 h-3.5 rounded-full border-2 border-primary-foreground/40 border-t-primary-foreground animate-spin" />
-                    )}
-                    {brawlLink ? "Mettre à jour" : "Lier"}
+                    {saving && <div className="w-3.5 h-3.5 rounded-full border-2 border-primary-foreground/40 border-t-primary-foreground animate-spin" />}
+                    Lier
                   </button>
                 </div>
-
-                {brawlLink && (
-                  <button
-                    onClick={handleUnlink}
-                    disabled={unlinking}
-                    className="inline-flex items-center gap-2 text-sm text-destructive hover:text-destructive/80 transition-colors disabled:opacity-50"
-                  >
-                    {unlinking && (
-                      <div className="w-3.5 h-3.5 rounded-full border-2 border-destructive/30 border-t-destructive animate-spin" />
-                    )}
-                    Dissocier le tag
-                  </button>
-                )}
-
                 {feedback && (
                   <p className={`text-sm ${feedback.type === "success" ? "text-green-500" : "text-destructive"}`}>
                     {feedback.message}
