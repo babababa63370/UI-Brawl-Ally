@@ -171,8 +171,8 @@ export default function Navbar() {
       <style>{dropdownAnimation}</style>
       <div className="mx-auto max-w-6xl px-6">
         <div className="flex h-16 items-center justify-between">
-          <a href="#" className="text-lg font-semibold tracking-tight text-foreground">
-            BrawlAlly
+          <a href="#" className="flex items-center">
+            <img src="http://cdn.meonix.me/cdn/logo/bt.png" alt="BrawlAlly" className="h-8 w-auto" />
           </a>
 
           <ul className="hidden md:flex items-center gap-1">
