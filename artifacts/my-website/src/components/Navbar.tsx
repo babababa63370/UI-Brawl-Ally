@@ -171,8 +171,11 @@ export default function Navbar() {
       <style>{dropdownAnimation}</style>
       <div className="mx-auto max-w-6xl px-6">
         <div className="flex h-16 items-center justify-between">
-          <a href="#" className="flex items-center">
-            <img src="http://cdn.meonix.me/cdn/logo/bt.png" alt="BrawlAlly" className="h-8 w-auto" />
+          <a href="#" className="flex items-center gap-2.5">
+            <img src="http://cdn.meonix.me/cdn/logo/bt.png" alt="BrawlAlly" className="h-8 w-8 rounded-lg object-cover" />
+            <span style={{ fontFamily: "'Orbitron', sans-serif" }} className="text-base font-bold tracking-wide text-foreground">
+              BrawlAlly
+            </span>
           </a>
 
           <ul className="hidden md:flex items-center gap-1">
