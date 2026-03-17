@@ -1,6 +1,7 @@
 import { useAuth } from "@/contexts/auth";
 import Navbar from "@/components/Navbar";
 import BlobBackground from "@/components/BlobBackground";
+import { useState, useEffect } from "react";
 
 function DiscordIcon() {
   return (
@@ -10,8 +11,91 @@ function DiscordIcon() {
   );
 }
 
+function BrawlIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+    </svg>
+  );
+}
+
+type BrawlLink = {
+  discord_id: string;
+  brawl_tag: string;
+  linked_at: string;
+} | null;
+
 export default function Settings() {
   const { auth, logout, loginUrl } = useAuth();
+  const [brawlLink, setBrawlLink] = useState<BrawlLink>(null);
+  const [brawlLoading, setBrawlLoading] = useState(false);
+  const [tagInput, setTagInput] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [unlinking, setUnlinking] = useState(false);
+  const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
+  useEffect(() => {
+    if (auth.status !== "authenticated") return;
+    setBrawlLoading(true);
+    fetch("/api/brawl/me", { credentials: "include" })
+      .then((r) => r.json())
+      .then((data) => {
+        setBrawlLink(data.link ?? null);
+        if (data.link) setTagInput(data.link.brawl_tag);
+      })
+      .catch(() => setBrawlLink(null))
+      .finally(() => setBrawlLoading(false));
+  }, [auth.status]);
+
+  const handleLink = async () => {
+    const tag = tagInput.trim().replace(/^#/, "").toUpperCase();
+    if (!tag) return;
+    setSaving(true);
+    setFeedback(null);
+    try {
+      const r = await fetch("/api/brawl/link", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ brawl_tag: tag }),
+      });
+      const data = await r.json();
+      if (r.ok) {
+        setBrawlLink(data.link);
+        setTagInput(data.link.brawl_tag);
+        setFeedback({ type: "success", message: "Tag Brawl Stars lié avec succès !" });
+      } else {
+        setFeedback({ type: "error", message: data.error ?? "Erreur lors de la liaison." });
+      }
+    } catch {
+      setFeedback({ type: "error", message: "Erreur réseau." });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleUnlink = async () => {
+    setUnlinking(true);
+    setFeedback(null);
+    try {
+      const r = await fetch("/api/brawl/unlink", {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (r.ok) {
+        setBrawlLink(null);
+        setTagInput("");
+        setFeedback({ type: "success", message: "Tag dissocié avec succès." });
+      } else {
+        const data = await r.json();
+        setFeedback({ type: "error", message: data.error ?? "Erreur lors de la dissociation." });
+      }
+    } catch {
+      setFeedback({ type: "error", message: "Erreur réseau." });
+    } finally {
+      setUnlinking(false);
+    }
+  };
 
   if (auth.status === "loading") {
     return (
@@ -64,6 +148,7 @@ export default function Settings() {
         <div className="mx-auto max-w-lg">
           <h1 className="text-2xl font-semibold text-foreground mb-8">Paramètres</h1>
 
+          {/* Discord Profile */}
           <div className="rounded-xl border border-border/60 bg-card/80 backdrop-blur-sm p-6 shadow-md">
             <h2 className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-4">
               Profil Discord
@@ -90,7 +175,78 @@ export default function Settings() {
             </div>
           </div>
 
-          <div className="mt-6 rounded-xl border border-border/60 bg-card/80 backdrop-blur-sm p-6 shadow-md">
+          {/* Brawl Stars Link */}
+          <div className="mt-4 rounded-xl border border-border/60 bg-card/80 backdrop-blur-sm p-6 shadow-md">
+            <h2 className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-4">
+              Liaison Brawl Stars
+            </h2>
+
+            {brawlLoading ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="w-4 h-4 rounded-full border-2 border-muted border-t-foreground animate-spin" />
+                Chargement…
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {brawlLink && (
+                  <div className="flex items-center gap-3 rounded-lg bg-accent/40 border border-border/40 px-4 py-3">
+                    <div className="w-8 h-8 rounded-lg bg-yellow-500/20 flex items-center justify-center text-yellow-500">
+                      <BrawlIcon />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Tag actuel</p>
+                      <p className="font-mono font-semibold text-foreground">#{brawlLink.brawl_tag}</p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-mono text-sm">#</span>
+                    <input
+                      type="text"
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value.replace(/^#/, ""))}
+                      placeholder="TON_TAG"
+                      className="w-full pl-7 pr-3 py-2 rounded-lg border border-border/60 bg-background text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring text-foreground placeholder:text-muted-foreground/50"
+                    />
+                  </div>
+                  <button
+                    onClick={handleLink}
+                    disabled={saving || !tagInput.trim()}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {saving ? (
+                      <div className="w-3.5 h-3.5 rounded-full border-2 border-primary-foreground/40 border-t-primary-foreground animate-spin" />
+                    ) : null}
+                    {brawlLink ? "Mettre à jour" : "Lier"}
+                  </button>
+                </div>
+
+                {brawlLink && (
+                  <button
+                    onClick={handleUnlink}
+                    disabled={unlinking}
+                    className="inline-flex items-center gap-2 text-sm text-destructive hover:text-destructive/80 transition-colors disabled:opacity-50"
+                  >
+                    {unlinking ? (
+                      <div className="w-3.5 h-3.5 rounded-full border-2 border-destructive/30 border-t-destructive animate-spin" />
+                    ) : null}
+                    Dissocier le tag
+                  </button>
+                )}
+
+                {feedback && (
+                  <p className={`text-sm ${feedback.type === "success" ? "text-green-500" : "text-destructive"}`}>
+                    {feedback.message}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Account */}
+          <div className="mt-4 rounded-xl border border-border/60 bg-card/80 backdrop-blur-sm p-6 shadow-md">
             <h2 className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-4">
               Compte
             </h2>
