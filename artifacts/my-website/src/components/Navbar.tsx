@@ -8,7 +8,7 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
-  { label: "Accueil", href: "#" },
+  { label: "Accueil", href: "/" },
   {
     label: "Statistiques",
     children: [
