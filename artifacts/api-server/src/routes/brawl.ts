@@ -50,7 +50,7 @@ router.get("/player/:tag", async (req, res) => {
   const tag = req.params.tag.replace(/^#/, "").toUpperCase();
 
   try {
-    const r = await fetch(`${MEONIX_API}/player/${tag}`, {
+    const r = await fetch(`${MEONIX_API}/api/player/${tag}`, {
       headers: meonixHeaders(),
     });
 
