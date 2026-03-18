@@ -191,7 +191,7 @@ function NavItemDesktop({ item }: { item: NavItem }) {
 
   if (!item.children) {
     return (
-      <li>
+      <li className={item.gold ? "mx-1.5" : undefined}>
         <a
           href={item.href}
           onClick={item.gold ? undefined : handleClick}
