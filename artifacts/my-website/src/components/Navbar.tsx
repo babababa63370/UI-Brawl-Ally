@@ -40,6 +40,18 @@ const dropdownAnimation = `
   }
   .dropdown-enter { animation: dropdownIn  180ms ease forwards; transform-origin: top; }
   .dropdown-leave { animation: dropdownOut 140ms ease forwards; transform-origin: top; }
+
+  @keyframes mobileMenuIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .mobile-menu-enter { animation: mobileMenuIn 200ms ease forwards; }
+
+  @keyframes mobileSubIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .mobile-sub-enter { animation: mobileSubIn 180ms ease forwards; }
 `;
 
 function DropdownMenu({
@@ -192,10 +204,13 @@ export default function Navbar() {
       </div>
 
       {mobileOpen && (
-        <div className="md:hidden border-t border-border/50 bg-background/95 backdrop-blur-md px-6 py-4">
+        <div className="md:hidden border-t border-border/50 bg-background/95 backdrop-blur-md px-6 py-4 mobile-menu-enter">
           <ul className="flex flex-col gap-1">
-            {navItems.map((item) => (
-              <li key={item.label}>
+            {navItems.map((item, i) => (
+              <li
+                key={item.label}
+                style={{ animationDelay: `${i * 40}ms`, opacity: 0, animation: `mobileMenuIn 200ms ease ${i * 40}ms forwards` }}
+              >
                 {!item.children ? (
                   <a
                     href={item.href}
@@ -215,22 +230,28 @@ export default function Navbar() {
                       {item.label}
                       <ChevronDown
                         size={14}
-                        className={`transition-transform duration-200 ${
+                        className={`transition-transform duration-300 ${
                           mobileExpanded === item.label ? "rotate-180" : ""
                         }`}
                       />
                     </button>
                     {mobileExpanded === item.label && (
-                      <ul className="ml-4 mt-1 flex flex-col gap-1">
-                        {item.children.map((child) =>
+                      <ul className="ml-4 mt-1 flex flex-col gap-1 overflow-hidden">
+                        {item.children.map((child, j) =>
                           child.disabled ? (
-                            <li key={child.label}>
+                            <li
+                              key={child.label}
+                              style={{ opacity: 0, animation: `mobileSubIn 160ms ease ${j * 50}ms forwards` }}
+                            >
                               <span className="block px-4 py-2 text-sm text-muted-foreground/50 italic cursor-default">
                                 {child.label}
                               </span>
                             </li>
                           ) : (
-                            <li key={child.label}>
+                            <li
+                              key={child.label}
+                              style={{ opacity: 0, animation: `mobileSubIn 160ms ease ${j * 50}ms forwards` }}
+                            >
                               <a
                                 href={child.href}
                                 className="block px-4 py-2 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
