@@ -2,6 +2,8 @@ import express, { type Express } from "express";
 import cors from "cors";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
+import path from "path";
+import fs from "fs";
 import { pool } from "@workspace/db";
 import router from "./routes";
 
@@ -35,5 +37,13 @@ app.use(
 );
 
 app.use("/api", router);
+
+const staticDir = process.env.STATIC_DIR;
+if (staticDir && fs.existsSync(staticDir)) {
+  app.use(express.static(staticDir));
+  app.get("*", (_req, res) => {
+    res.sendFile(path.join(staticDir, "index.html"));
+  });
+}
 
 export default app;

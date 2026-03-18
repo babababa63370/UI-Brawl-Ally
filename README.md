@@ -42,7 +42,63 @@ Créer les secrets suivants dans Replit Secrets (ou un fichier `.env` en local) 
 | `SESSION_SECRET` | Secret pour les sessions Express (optionnel en dev) |
 | `DATABASE_URL` | URL PostgreSQL (fournie automatiquement par Replit) |
 
-## Lancer le projet
+## Docker (déploiement autonome)
+
+Le projet inclut un `Dockerfile` multi-stage et un `docker-compose.yml` qui gèrent le frontend, le backend et PostgreSQL.
+
+### Démarrage rapide
+
+```bash
+# 1. Copier le fichier d'environnement et le remplir
+cp .env.example .env
+
+# 2. Lancer tout (build + base de données + app)
+docker compose up --build -d
+```
+
+L'application sera disponible sur `http://localhost:8080`.
+
+### Variables dans `.env`
+
+| Variable | Description |
+|---|---|
+| `POSTGRES_DB` | Nom de la base de données (défaut : `brawlally`) |
+| `POSTGRES_USER` | Utilisateur PostgreSQL (défaut : `brawlally`) |
+| `POSTGRES_PASSWORD` | **Requis** — mot de passe PostgreSQL |
+| `DISCORD_CLIENT_ID` | ID de l'app Discord OAuth2 |
+| `DISCORD_CLIENT_SECRET` | Secret de l'app Discord OAuth2 |
+| `DISCORD_API_KEY` | Clé API Meonix |
+| `SESSION_SECRET` | Secret de session Express (chaîne aléatoire longue) |
+| `PORT` | Port exposé sur l'hôte (défaut : `8080`) |
+
+### Architecture Docker
+
+```
+docker compose
+├── db      → PostgreSQL 16 (volume persistant)
+└── app     → Node.js 24 (API + frontend statique servi ensemble)
+```
+
+Le `Dockerfile` utilise un build multi-stage :
+- **Stage builder** — installe les dépendances, compile le frontend Vite et bundle le backend avec esbuild
+- **Stage production** — image minimale avec uniquement le bundle CJS et les fichiers statiques
+
+### Commandes utiles
+
+```bash
+# Voir les logs
+docker compose logs -f app
+
+# Arrêter
+docker compose down
+
+# Supprimer les données PostgreSQL
+docker compose down -v
+```
+
+---
+
+## Lancer le projet (développement)
 
 ### Installation des dépendances
 

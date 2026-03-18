@@ -1,0 +1,13 @@
+node_modules
+**/node_modules
+**/.git
+**/.gitignore
+**/dist
+**/.env
+**/*.log
+**/coverage
+**/.DS_Store
+artifacts/my-website-app
+artifacts/mockup-sandbox
+.local
+scripts
