@@ -4,6 +4,7 @@ import { Menu, X, ChevronDown } from "lucide-react";
 type NavItem = {
   label: string;
   href?: string;
+  gold?: boolean;
   children?: { label: string; href?: string; disabled?: boolean }[];
 };
 
@@ -25,7 +26,7 @@ const navItems: NavItem[] = [
       { label: "Configurer", href: "#" },
     ],
   },
-  { label: "Abonnements", href: "#" },
+  { label: "Abonnements", href: "#", gold: true },
   { label: "Profil", href: "/settings" },
 ];
 
@@ -58,6 +59,35 @@ const dropdownAnimation = `
     to   { opacity: 0; transform: translateY(-4px); max-height: 0; }
   }
   .mobile-sub-leave { animation: mobileSubOut 150ms ease forwards; overflow: hidden; }
+
+  @keyframes goldShimmer {
+    0%   { background-position: -200% center; }
+    100% { background-position:  200% center; }
+  }
+  @keyframes goldPulse {
+    0%, 100% { box-shadow: 0 0 6px 1px rgba(212,175,55,0.35); }
+    50%       { box-shadow: 0 0 12px 3px rgba(212,175,55,0.6); }
+  }
+  .gold-btn {
+    background: linear-gradient(90deg, #b8860b 0%, #ffd700 30%, #ffe680 50%, #ffd700 70%, #b8860b 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: goldShimmer 3s linear infinite;
+    font-weight: 600;
+    position: relative;
+  }
+  .gold-btn-wrap {
+    border: 1px solid rgba(212,175,55,0.45);
+    border-radius: 6px;
+    animation: goldPulse 2.5s ease-in-out infinite;
+    background: rgba(212,175,55,0.07);
+  }
+  .gold-btn-wrap:hover {
+    background: rgba(212,175,55,0.15);
+    border-color: rgba(212,175,55,0.75);
+  }
 `;
 
 function DropdownMenu({
@@ -147,7 +177,11 @@ function NavItemDesktop({ item }: { item: NavItem }) {
       <li>
         <a
           href={item.href}
-          className="px-4 py-2 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors duration-150 flex items-center"
+          className={`px-4 py-2 text-sm flex items-center transition-colors duration-150 ${
+            item.gold
+              ? "gold-btn-wrap gold-btn"
+              : "rounded-md text-muted-foreground hover:text-foreground hover:bg-accent"
+          }`}
         >
           {item.label}
         </a>
@@ -255,7 +289,11 @@ export default function Navbar() {
                 {!item.children ? (
                   <a
                     href={item.href}
-                    className="block px-4 py-2 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                    className={`block px-4 py-2 text-sm transition-colors ${
+                      item.gold
+                        ? "gold-btn-wrap gold-btn"
+                        : "rounded-md text-muted-foreground hover:text-foreground hover:bg-accent"
+                    }`}
                     onClick={() => setMobileOpen(false)}
                   >
                     {item.label}
