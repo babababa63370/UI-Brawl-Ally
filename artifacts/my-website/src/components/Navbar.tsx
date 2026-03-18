@@ -189,7 +189,6 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
   const [mobileClosing, setMobileClosing] = useState<string | null>(null);
-  const pendingExpand = useRef<string | null>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleMobileExpand = useCallback((label: string) => {
@@ -204,16 +203,13 @@ export default function Navbar() {
       return;
     }
 
-    // Another item is open → close it first, then open new one
+    // Another item is open → close it and open the new one simultaneously
     if (mobileExpanded) {
-      pendingExpand.current = label;
       setMobileClosing(mobileExpanded);
-      setMobileExpanded(null);
+      setMobileExpanded(label);
       if (closeTimer.current) clearTimeout(closeTimer.current);
       closeTimer.current = setTimeout(() => {
         setMobileClosing(null);
-        setMobileExpanded(pendingExpand.current);
-        pendingExpand.current = null;
       }, CLOSE_DURATION);
       return;
     }
