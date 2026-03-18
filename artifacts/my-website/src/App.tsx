@@ -17,24 +17,28 @@ const features = [
     title: "Statistiques",
     subtitle: "Joueurs · Classement · Meta",
     description: "Description à venir.",
+    gold: false,
   },
   {
     icon: Search,
     title: "Club Tracking",
     subtitle: "Découvrir · Configurer",
     description: "Description à venir.",
+    gold: false,
   },
   {
     icon: Crown,
     title: "Abonnements",
     subtitle: "Plans & avantages",
     description: "Description à venir.",
+    gold: true,
   },
   {
     icon: Users,
     title: "Profil",
     subtitle: "Paramètres & compte",
     description: "Description à venir.",
+    gold: false,
   },
 ];
 
@@ -66,15 +70,19 @@ function Home() {
         {/* Features */}
         <section className="px-4 pb-24 max-w-5xl mx-auto">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {features.map(({ icon: Icon, title, subtitle, description }) => (
+            {features.map(({ icon: Icon, title, subtitle, description, gold }) => (
               <div
                 key={title}
-                className="group rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm p-6 hover:border-border hover:bg-card/80 transition-all duration-200 cursor-pointer"
+                className={`group rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm p-6 transition-all duration-200 cursor-pointer ${
+                  gold ? "gold-card" : "hover:border-border hover:bg-card/80"
+                }`}
               >
-                <div className="mb-4 w-10 h-10 rounded-lg bg-accent flex items-center justify-center text-muted-foreground group-hover:text-foreground transition-colors">
+                <div className={`mb-4 w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
+                  gold ? "gold-icon" : "bg-accent text-muted-foreground group-hover:text-foreground"
+                }`}>
                   <Icon size={20} />
                 </div>
-                <h3 className="font-semibold text-foreground text-sm">{title}</h3>
+                <h3 className={`text-sm ${gold ? "gold-title" : "font-semibold text-foreground"}`}>{title}</h3>
                 <p className="text-xs text-muted-foreground mt-0.5 mb-3">{subtitle}</p>
                 <p className="text-xs text-muted-foreground/70 italic">{description}</p>
               </div>

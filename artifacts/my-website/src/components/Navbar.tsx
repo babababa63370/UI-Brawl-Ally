@@ -60,34 +60,6 @@ const dropdownAnimation = `
   }
   .mobile-sub-leave { animation: mobileSubOut 150ms ease forwards; overflow: hidden; }
 
-  @keyframes goldShimmer {
-    0%   { background-position: -200% center; }
-    100% { background-position:  200% center; }
-  }
-  @keyframes goldPulse {
-    0%, 100% { box-shadow: 0 0 6px 1px rgba(212,175,55,0.35); }
-    50%       { box-shadow: 0 0 12px 3px rgba(212,175,55,0.6); }
-  }
-  .gold-btn {
-    background: linear-gradient(90deg, #b8860b 0%, #ffd700 30%, #ffe680 50%, #ffd700 70%, #b8860b 100%);
-    background-size: 200% auto;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: goldShimmer 3s linear infinite;
-    font-weight: 600;
-    position: relative;
-  }
-  .gold-btn-wrap {
-    border: 1px solid rgba(212,175,55,0.45);
-    border-radius: 6px;
-    animation: goldPulse 2.5s ease-in-out infinite;
-    background: rgba(212,175,55,0.07);
-  }
-  .gold-btn-wrap:hover {
-    background: rgba(212,175,55,0.15);
-    border-color: rgba(212,175,55,0.75);
-  }
 `;
 
 function DropdownMenu({
