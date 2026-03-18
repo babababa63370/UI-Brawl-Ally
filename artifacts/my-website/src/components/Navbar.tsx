@@ -246,27 +246,29 @@ function DesktopProfilLink() {
   const user = auth.status === "authenticated" ? auth.user : null;
 
   return (
-    <a
-      href="/settings"
-      onClick={(e) => { e.preventDefault(); if (!isActive) navigate("/settings"); }}
-      aria-current={isActive ? "page" : undefined}
-      className={`px-3 py-1.5 text-sm flex items-center gap-2 rounded-md transition-colors duration-150 ${
-        isActive
-          ? "text-foreground bg-accent font-medium"
-          : "text-muted-foreground hover:text-foreground hover:bg-accent"
-      }`}
-    >
-      <span>Profil</span>
+    <>
+      <a
+        href="/settings"
+        onClick={(e) => { e.preventDefault(); if (!isActive) navigate("/settings"); }}
+        aria-current={isActive ? "page" : undefined}
+        className={`px-3 py-1.5 text-sm rounded-md transition-colors duration-150 ${
+          isActive
+            ? "text-foreground bg-accent font-medium"
+            : "text-muted-foreground hover:text-foreground hover:bg-accent"
+        }`}
+      >
+        Profil
+      </a>
       {user?.avatar ? (
         <img
           src={user.avatar}
           alt={user.displayName}
-          className="w-6 h-6 rounded-full border border-border/60 shrink-0"
+          className="w-7 h-7 rounded-full border border-border/60 shrink-0 pointer-events-none select-none"
         />
       ) : (
-        <UserCircle size={18} className="shrink-0" />
+        <UserCircle size={20} className="shrink-0 text-muted-foreground pointer-events-none" />
       )}
-    </a>
+    </>
   );
 }
 
@@ -339,11 +341,11 @@ export default function Navbar() {
             </span>
           </a>
 
-          <ul className="hidden md:flex items-center gap-1">
+          <ul className="hidden md:flex items-center gap-2">
             {navItems.filter((item) => item.label !== "Profil").map((item) => (
               <NavItemDesktop key={item.label} item={item} />
             ))}
-            <li>
+            <li className="flex items-center gap-1.5">
               <DesktopProfilLink />
             </li>
           </ul>
