@@ -26,10 +26,7 @@ const navItems: NavItem[] = [
     ],
   },
   { label: "Abonnements", href: "#" },
-  {
-    label: "Profil",
-    children: [{ label: "Paramètres", href: "/settings" }],
-  },
+  { label: "Profil", href: "/settings" },
 ];
 
 const dropdownAnimation = `
