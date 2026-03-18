@@ -48,7 +48,12 @@ const dropdownAnimation = `
     from { opacity: 0; transform: translateY(-8px); }
     to   { opacity: 1; transform: translateY(0); }
   }
-  .mobile-menu-enter { animation: mobileMenuIn 200ms ease forwards; }
+  @keyframes mobileMenuOut {
+    from { opacity: 1; transform: translateY(0); }
+    to   { opacity: 0; transform: translateY(-8px); }
+  }
+  .mobile-menu-enter { animation: mobileMenuIn  200ms ease forwards; }
+  .mobile-menu-leave { animation: mobileMenuOut 180ms ease forwards; }
 
   @keyframes mobileSubIn {
     from { opacity: 0; transform: translateY(-4px); }
@@ -276,13 +281,26 @@ const CLOSE_DURATION = 160;
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileMenuClosing, setMobileMenuClosing] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
   const [mobileClosing, setMobileClosing] = useState<string | null>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const menuCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [location, navigate] = useLocation();
   const { auth } = useAuth();
   const mobileUser = auth.status === "authenticated" ? auth.user : null;
   const [brawlTag, setBrawlTag] = useState<string | null>(null);
+
+  const closeMobileMenu = useCallback(() => {
+    setMobileMenuClosing(true);
+    setMobileExpanded(null);
+    setMobileClosing(null);
+    if (menuCloseTimer.current) clearTimeout(menuCloseTimer.current);
+    menuCloseTimer.current = setTimeout(() => {
+      setMobileOpen(false);
+      setMobileMenuClosing(false);
+    }, 180);
+  }, []);
 
   useEffect(() => {
     if (auth.status !== "authenticated") { setBrawlTag(null); return; }
@@ -320,9 +338,9 @@ export default function Navbar() {
     (href: string | undefined) => {
       if (!href || href === "#") return;
       if (href !== location) navigate(href);
-      setMobileOpen(false);
+      closeMobileMenu();
     },
-    [location, navigate],
+    [location, navigate, closeMobileMenu],
   );
 
   return (
@@ -352,16 +370,16 @@ export default function Navbar() {
 
           <button
             className="md:hidden p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-            onClick={() => setMobileOpen((v) => !v)}
+            onClick={() => mobileOpen ? closeMobileMenu() : setMobileOpen(true)}
             aria-label="Menu"
           >
-            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+            {mobileOpen && !mobileMenuClosing ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
       </div>
 
       {mobileOpen && (
-        <div className="md:hidden border-t border-border/50 bg-background/95 backdrop-blur-md px-6 py-4 mobile-menu-enter">
+        <div className={`md:hidden border-t border-border/50 bg-background/95 backdrop-blur-md px-6 py-4 ${mobileMenuClosing ? "mobile-menu-leave" : "mobile-menu-enter"}`}>
           <ul className="flex flex-col gap-1">
             {navItems.map((item, i) => {
               const isActive = item.href && item.href !== "#" && item.href === location;
