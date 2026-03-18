@@ -54,6 +54,15 @@ const dropdownAnimation = `
   }
   .mobile-sub-enter { animation: mobileSubIn 180ms ease forwards; }
 
+  @keyframes mobileSubContainerIn {
+    from { max-height: 0; opacity: 0; }
+    to   { max-height: 400px; opacity: 1; }
+  }
+  .mobile-sub-open {
+    animation: mobileSubContainerIn 220ms ease forwards;
+    overflow: hidden;
+  }
+
   @keyframes mobileSubOut {
     from { opacity: 1; transform: translateY(0); max-height: 300px; }
     to   { opacity: 0; transform: translateY(-4px); max-height: 0; }
@@ -281,7 +290,7 @@ export default function Navbar() {
                       />
                     </button>
                     {(mobileExpanded === item.label || mobileClosing === item.label) && (
-                      <ul className={`ml-4 mt-1 flex flex-col gap-1 ${mobileClosing === item.label ? "mobile-sub-leave" : ""}`}>
+                      <ul className={`ml-4 mt-1 flex flex-col gap-1 ${mobileClosing === item.label ? "mobile-sub-leave" : "mobile-sub-open"}`}>
                         {item.children.map((child, j) =>
                           child.disabled ? (
                             <li
