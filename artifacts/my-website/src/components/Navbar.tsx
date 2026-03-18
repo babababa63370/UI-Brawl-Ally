@@ -179,11 +179,11 @@ function NavItemDesktop({ item }: { item: NavItem }) {
           href={item.href}
           className={`px-4 py-2 text-sm flex items-center transition-colors duration-150 ${
             item.gold
-              ? "gold-btn-wrap gold-btn"
+              ? "gold-btn-wrap"
               : "rounded-md text-muted-foreground hover:text-foreground hover:bg-accent"
           }`}
         >
-          {item.label}
+          {item.gold ? <span className="gold-btn">{item.label}</span> : item.label}
         </a>
       </li>
     );
@@ -291,12 +291,12 @@ export default function Navbar() {
                     href={item.href}
                     className={`block px-4 py-2 text-sm transition-colors ${
                       item.gold
-                        ? "gold-btn-wrap gold-btn"
+                        ? "gold-btn-wrap"
                         : "rounded-md text-muted-foreground hover:text-foreground hover:bg-accent"
                     }`}
                     onClick={() => setMobileOpen(false)}
                   >
-                    {item.label}
+                    {item.gold ? <span className="gold-btn">{item.label}</span> : item.label}
                   </a>
                 ) : (
                   <>
