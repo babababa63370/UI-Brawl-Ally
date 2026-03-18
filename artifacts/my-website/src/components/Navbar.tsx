@@ -256,6 +256,7 @@ function DesktopProfilLink() {
           : "text-muted-foreground hover:text-foreground hover:bg-accent"
       }`}
     >
+      <span>Profil</span>
       {user?.avatar ? (
         <img
           src={user.avatar}
@@ -265,7 +266,6 @@ function DesktopProfilLink() {
       ) : (
         <UserCircle size={18} className="shrink-0" />
       )}
-      <span>Profil</span>
     </a>
   );
 }
@@ -280,6 +280,15 @@ export default function Navbar() {
   const [location, navigate] = useLocation();
   const { auth } = useAuth();
   const mobileUser = auth.status === "authenticated" ? auth.user : null;
+  const [brawlTag, setBrawlTag] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (auth.status !== "authenticated") { setBrawlTag(null); return; }
+    fetch("/api/brawl/me", { credentials: "include" })
+      .then((r) => r.json())
+      .then((data) => setBrawlTag(data.link?.brawl_tag ?? null))
+      .catch(() => setBrawlTag(null));
+  }, [auth.status]);
 
   const handleMobileExpand = useCallback((label: string) => {
     if (mobileExpanded === label) {
@@ -448,7 +457,9 @@ export default function Navbar() {
                 )}
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-foreground truncate">{mobileUser.displayName}</p>
-                  <p className="text-xs text-muted-foreground truncate">@{mobileUser.username}</p>
+                  {brawlTag && (
+                    <p className="text-xs text-muted-foreground truncate font-mono">#{brawlTag}</p>
+                  )}
                 </div>
               </a>
             </div>
