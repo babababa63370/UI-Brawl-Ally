@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
-import { Menu, X, ChevronDown } from "lucide-react";
+import { Menu, X, ChevronDown, UserCircle } from "lucide-react";
+import { useAuth } from "@/contexts/auth";
 
 type NavItem = {
   label: string;
@@ -237,6 +238,38 @@ function NavItemDesktop({ item }: { item: NavItem }) {
   );
 }
 
+function DesktopProfilLink() {
+  const { auth } = useAuth();
+  const [location, navigate] = useLocation();
+  const isActive = location === "/settings";
+
+  const user = auth.status === "authenticated" ? auth.user : null;
+
+  return (
+    <a
+      href="/settings"
+      onClick={(e) => { e.preventDefault(); if (!isActive) navigate("/settings"); }}
+      aria-current={isActive ? "page" : undefined}
+      className={`px-3 py-1.5 text-sm flex items-center gap-2 rounded-md transition-colors duration-150 ${
+        isActive
+          ? "text-foreground bg-accent font-medium"
+          : "text-muted-foreground hover:text-foreground hover:bg-accent"
+      }`}
+    >
+      {user?.avatar ? (
+        <img
+          src={user.avatar}
+          alt={user.displayName}
+          className="w-6 h-6 rounded-full border border-border/60 shrink-0"
+        />
+      ) : (
+        <UserCircle size={18} className="shrink-0" />
+      )}
+      <span>{user ? user.displayName : "Profil"}</span>
+    </a>
+  );
+}
+
 const CLOSE_DURATION = 160;
 
 export default function Navbar() {
@@ -245,6 +278,8 @@ export default function Navbar() {
   const [mobileClosing, setMobileClosing] = useState<string | null>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [location, navigate] = useLocation();
+  const { auth } = useAuth();
+  const mobileUser = auth.status === "authenticated" ? auth.user : null;
 
   const handleMobileExpand = useCallback((label: string) => {
     if (mobileExpanded === label) {
@@ -296,9 +331,12 @@ export default function Navbar() {
           </a>
 
           <ul className="hidden md:flex items-center gap-1">
-            {navItems.map((item) => (
+            {navItems.filter((item) => item.label !== "Profil").map((item) => (
               <NavItemDesktop key={item.label} item={item} />
             ))}
+            <li>
+              <DesktopProfilLink />
+            </li>
           </ul>
 
           <button
@@ -314,7 +352,7 @@ export default function Navbar() {
       {mobileOpen && (
         <div className="md:hidden border-t border-border/50 bg-background/95 backdrop-blur-md px-6 py-4 mobile-menu-enter">
           <ul className="flex flex-col gap-1">
-            {navItems.map((item, i) => {
+            {navItems.filter((item) => item.label !== "Profil").map((item, i) => {
               const isActive = item.href && item.href !== "#" && item.href === location;
               return (
                 <li
@@ -389,6 +427,32 @@ export default function Navbar() {
               );
             })}
           </ul>
+
+          {mobileUser && (
+            <div className="mt-4 pt-4 border-t border-border/50">
+              <a
+                href="/settings"
+                onClick={(e) => { e.preventDefault(); handleMobileNav("/settings"); }}
+                className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-accent transition-colors"
+              >
+                {mobileUser.avatar ? (
+                  <img
+                    src={mobileUser.avatar}
+                    alt={mobileUser.displayName}
+                    className="w-9 h-9 rounded-full border border-border/60 shrink-0"
+                  />
+                ) : (
+                  <div className="w-9 h-9 rounded-full bg-[#5865F2]/20 flex items-center justify-center shrink-0">
+                    <UserCircle size={20} className="text-[#5865F2]" />
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">{mobileUser.displayName}</p>
+                  <p className="text-xs text-muted-foreground truncate">@{mobileUser.username}</p>
+                </div>
+              </a>
+            </div>
+          )}
         </div>
       )}
     </nav>
