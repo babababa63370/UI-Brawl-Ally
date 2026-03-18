@@ -52,6 +52,12 @@ const dropdownAnimation = `
     to   { opacity: 1; transform: translateY(0); }
   }
   .mobile-sub-enter { animation: mobileSubIn 180ms ease forwards; }
+
+  @keyframes mobileSubOut {
+    from { opacity: 1; transform: translateY(0); max-height: 300px; }
+    to   { opacity: 0; transform: translateY(-4px); max-height: 0; }
+  }
+  .mobile-sub-leave { animation: mobileSubOut 150ms ease forwards; overflow: hidden; }
 `;
 
 function DropdownMenu({
@@ -171,9 +177,44 @@ function NavItemDesktop({ item }: { item: NavItem }) {
   );
 }
 
+const CLOSE_DURATION = 160;
+
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
+  const [mobileClosing, setMobileClosing] = useState<string | null>(null);
+  const pendingExpand = useRef<string | null>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleMobileExpand = useCallback((label: string) => {
+    // Clicking the already-open item → close it
+    if (mobileExpanded === label) {
+      setMobileClosing(label);
+      setMobileExpanded(null);
+      if (closeTimer.current) clearTimeout(closeTimer.current);
+      closeTimer.current = setTimeout(() => {
+        setMobileClosing(null);
+      }, CLOSE_DURATION);
+      return;
+    }
+
+    // Another item is open → close it first, then open new one
+    if (mobileExpanded) {
+      pendingExpand.current = label;
+      setMobileClosing(mobileExpanded);
+      setMobileExpanded(null);
+      if (closeTimer.current) clearTimeout(closeTimer.current);
+      closeTimer.current = setTimeout(() => {
+        setMobileClosing(null);
+        setMobileExpanded(pendingExpand.current);
+        pendingExpand.current = null;
+      }, CLOSE_DURATION);
+      return;
+    }
+
+    // Nothing open → open directly
+    setMobileExpanded(label);
+  }, [mobileExpanded]);
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-md">
@@ -223,9 +264,7 @@ export default function Navbar() {
                   <>
                     <button
                       className="w-full text-left px-4 py-2 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors flex items-center justify-between"
-                      onClick={() =>
-                        setMobileExpanded((v) => (v === item.label ? null : item.label))
-                      }
+                      onClick={() => handleMobileExpand(item.label)}
                     >
                       {item.label}
                       <ChevronDown
@@ -235,13 +274,13 @@ export default function Navbar() {
                         }`}
                       />
                     </button>
-                    {mobileExpanded === item.label && (
-                      <ul className="ml-4 mt-1 flex flex-col gap-1 overflow-hidden">
+                    {(mobileExpanded === item.label || mobileClosing === item.label) && (
+                      <ul className={`ml-4 mt-1 flex flex-col gap-1 ${mobileClosing === item.label ? "mobile-sub-leave" : ""}`}>
                         {item.children.map((child, j) =>
                           child.disabled ? (
                             <li
                               key={child.label}
-                              style={{ opacity: 0, animation: `mobileSubIn 160ms ease ${j * 50}ms forwards` }}
+                              style={mobileClosing !== item.label ? { opacity: 0, animation: `mobileSubIn 160ms ease ${j * 50}ms forwards` } : {}}
                             >
                               <span className="block px-4 py-2 text-sm text-muted-foreground/50 italic cursor-default">
                                 {child.label}
@@ -250,7 +289,7 @@ export default function Navbar() {
                           ) : (
                             <li
                               key={child.label}
-                              style={{ opacity: 0, animation: `mobileSubIn 160ms ease ${j * 50}ms forwards` }}
+                              style={mobileClosing !== item.label ? { opacity: 0, animation: `mobileSubIn 160ms ease ${j * 50}ms forwards` } : {}}
                             >
                               <a
                                 href={child.href}
