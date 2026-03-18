@@ -14,7 +14,8 @@ function getRedirectUri(req: { headers: { host?: string }; protocol: string }): 
 
 router.get("/discord", (req, res) => {
   if (!DISCORD_CLIENT_ID) {
-    return res.status(500).json({ error: "DISCORD_CLIENT_ID not configured" });
+    res.status(500).json({ error: "DISCORD_CLIENT_ID not configured" });
+    return;
   }
   const redirectUri = encodeURIComponent(getRedirectUri(req));
   const url = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${redirectUri}&response_type=code&scope=identify%20email`;
@@ -25,7 +26,8 @@ router.get("/discord/callback", async (req, res) => {
   const code = req.query["code"] as string | undefined;
 
   if (!code) {
-    return res.redirect("/?auth=error");
+    res.redirect("/?auth=error");
+    return;
   }
 
   try {
@@ -45,7 +47,8 @@ router.get("/discord/callback", async (req, res) => {
 
     if (!tokenRes.ok) {
       console.error("Discord token exchange failed:", await tokenRes.text());
-      return res.redirect("/?auth=error");
+      res.redirect("/?auth=error");
+      return;
     }
 
     const tokenData = (await tokenRes.json()) as { access_token: string };
@@ -55,7 +58,8 @@ router.get("/discord/callback", async (req, res) => {
     });
 
     if (!userRes.ok) {
-      return res.redirect("/?auth=error");
+      res.redirect("/?auth=error");
+      return;
     }
 
     const user = (await userRes.json()) as {
@@ -87,7 +91,8 @@ router.get("/discord/callback", async (req, res) => {
 router.get("/me", (req, res) => {
   const session = (req as any).session;
   if (session?.user) {
-    return res.json({ user: session.user });
+    res.json({ user: session.user });
+    return;
   }
   res.status(401).json({ user: null });
 });

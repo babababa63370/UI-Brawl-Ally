@@ -15,7 +15,8 @@ function meonixHeaders() {
 router.get("/me", async (req, res) => {
   const session = (req as any).session;
   if (!session?.user) {
-    return res.status(401).json({ error: "Non connecté" });
+    res.status(401).json({ error: "Non connecté" });
+    return;
   }
 
   const discordId = session.user.id;
@@ -26,25 +27,28 @@ router.get("/me", async (req, res) => {
     });
 
     if (r.status === 404) {
-      return res.json({ link: null });
+      res.json({ link: null });
+      return;
     }
 
     if (!r.ok) {
-      return res.status(r.status).json({ error: "Erreur API externe" });
+      res.status(r.status).json({ error: "Erreur API externe" });
+      return;
     }
 
-    const data = await r.json() as { link: { discord_id: string; brawl_tag: string; linked_at: string } };
-    return res.json({ link: data.link });
+    const data = (await r.json()) as { link: { discord_id: string; brawl_tag: string; linked_at: string } };
+    res.json({ link: data.link });
   } catch (err) {
     console.error("Erreur brawl/me:", err);
-    return res.status(500).json({ error: "Erreur serveur" });
+    res.status(500).json({ error: "Erreur serveur" });
   }
 });
 
 router.get("/player/:tag", async (req, res) => {
   const session = (req as any).session;
   if (!session?.user) {
-    return res.status(401).json({ error: "Non connecté" });
+    res.status(401).json({ error: "Non connecté" });
+    return;
   }
 
   const tag = req.params.tag.replace(/^#/, "").toUpperCase();
@@ -54,28 +58,31 @@ router.get("/player/:tag", async (req, res) => {
       headers: meonixHeaders(),
     });
 
-    const data = await r.json();
+    const data = (await r.json()) as { error?: string };
 
     if (!r.ok) {
-      return res.status(r.status).json({ error: data.error ?? "Joueur introuvable" });
+      res.status(r.status).json({ error: data.error ?? "Joueur introuvable" });
+      return;
     }
 
-    return res.json(data);
+    res.json(data);
   } catch (err) {
     console.error("Erreur brawl/player:", err);
-    return res.status(503).json({ error: "Impossible de contacter l'API Brawl Stars" });
+    res.status(503).json({ error: "Impossible de contacter l'API Brawl Stars" });
   }
 });
 
 router.post("/link", async (req, res) => {
   const session = (req as any).session;
   if (!session?.user) {
-    return res.status(401).json({ error: "Non connecté" });
+    res.status(401).json({ error: "Non connecté" });
+    return;
   }
 
   const { brawl_tag } = req.body as { brawl_tag?: string };
   if (!brawl_tag) {
-    return res.status(400).json({ error: "brawl_tag requis" });
+    res.status(400).json({ error: "brawl_tag requis" });
+    return;
   }
 
   try {
@@ -89,17 +96,18 @@ router.post("/link", async (req, res) => {
     });
 
     const data = await r.json();
-    return res.status(r.status).json(data);
+    res.status(r.status).json(data);
   } catch (err) {
     console.error("Erreur brawl/link:", err);
-    return res.status(500).json({ error: "Erreur serveur" });
+    res.status(500).json({ error: "Erreur serveur" });
   }
 });
 
 router.delete("/unlink", async (req, res) => {
   const session = (req as any).session;
   if (!session?.user) {
-    return res.status(401).json({ error: "Non connecté" });
+    res.status(401).json({ error: "Non connecté" });
+    return;
   }
 
   try {
@@ -110,10 +118,10 @@ router.delete("/unlink", async (req, res) => {
     });
 
     const data = await r.json();
-    return res.status(r.status).json(data);
+    res.status(r.status).json(data);
   } catch (err) {
     console.error("Erreur brawl/unlink:", err);
-    return res.status(500).json({ error: "Erreur serveur" });
+    res.status(500).json({ error: "Erreur serveur" });
   }
 });
 
