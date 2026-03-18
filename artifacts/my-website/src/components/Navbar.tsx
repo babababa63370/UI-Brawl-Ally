@@ -265,7 +265,7 @@ function DesktopProfilLink() {
       ) : (
         <UserCircle size={18} className="shrink-0" />
       )}
-      <span>{user ? user.displayName : "Profil"}</span>
+      <span>Profil</span>
     </a>
   );
 }
@@ -352,7 +352,7 @@ export default function Navbar() {
       {mobileOpen && (
         <div className="md:hidden border-t border-border/50 bg-background/95 backdrop-blur-md px-6 py-4 mobile-menu-enter">
           <ul className="flex flex-col gap-1">
-            {navItems.filter((item) => item.label !== "Profil").map((item, i) => {
+            {navItems.map((item, i) => {
               const isActive = item.href && item.href !== "#" && item.href === location;
               return (
                 <li
