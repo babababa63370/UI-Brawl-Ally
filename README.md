@@ -1,5 +1,9 @@
 # BrawlAlly
 
+<p align="center">
+  <img src="https://cdn.meonix.me/cdn/logo/ba.png" alt="BrawlAlly" width="96" />
+</p>
+
 Site web companion pour Brawl Stars, permettant aux joueurs de lier leur compte Discord à leur tag Brawl Stars et de consulter leurs statistiques.
 
 ## Stack technique
