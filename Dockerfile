@@ -38,6 +38,8 @@ RUN pnpm install --no-frozen-lockfile --filter @workspace/api-server --prod
 
 COPY --from=builder /app/artifacts/api-server/dist/index.cjs ./server.cjs
 COPY --from=builder /app/artifacts/my-website/dist/public/ ./public/
+# connect-pg-simple lit table.sql via __dirname (= /app/ dans le bundle)
+COPY --from=builder /app/node_modules/connect-pg-simple/table.sql ./table.sql
 
 ENV NODE_ENV=production
 ENV PORT=8080
