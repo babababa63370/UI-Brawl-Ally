@@ -6,9 +6,18 @@ const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID ?? "";
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET ?? "";
 
 function getRedirectUri(req: { headers: { host?: string }; protocol: string }): string {
+  // BASE_URL explicite (ex: https://mondomaine.com) — priorité absolue
+  if (process.env.BASE_URL) {
+    return `${process.env.BASE_URL.replace(/\/$/, "")}/api/auth/discord/callback`;
+  }
+  // Environnement Replit
   const domains = process.env.REPLIT_DOMAINS;
-  const host = domains ? domains.split(",")[0].trim() : req.headers.host ?? "localhost";
-  const proto = domains ? "https" : req.protocol;
+  if (domains) {
+    return `https://${domains.split(",")[0].trim()}/api/auth/discord/callback`;
+  }
+  // Sinon : protocole détecté via X-Forwarded-Proto (grâce à trust proxy)
+  const proto = req.protocol;
+  const host = req.headers.host ?? "localhost";
   return `${proto}://${host}/api/auth/discord/callback`;
 }
 
