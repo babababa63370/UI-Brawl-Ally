@@ -52,7 +52,7 @@ function Home() {
         {/* Hero */}
         <section className="flex flex-col items-center justify-center pt-32 pb-16 px-4 text-center">
           <img
-            src="https://cdn.meonix.me/cdn/logo/ba.png"
+            src="http://cdn.meonix.me/cdn/logo/bt.png"
             alt="BrawlAlly"
             className="h-24 w-24 rounded-2xl object-cover shadow-lg mb-6"
           />

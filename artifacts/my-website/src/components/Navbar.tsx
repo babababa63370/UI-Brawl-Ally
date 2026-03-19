@@ -353,7 +353,7 @@ export default function Navbar() {
             onClick={(e) => { e.preventDefault(); if (location !== "/") navigate("/"); }}
             className="flex items-center gap-2.5"
           >
-            <img src="https://cdn.meonix.me/cdn/logo/ba.png" alt="BrawlAlly" className="h-8 w-8 rounded-lg object-cover" />
+            <img src="http://cdn.meonix.me/cdn/logo/bt.png" alt="BrawlAlly" className="h-8 w-8 rounded-lg object-cover" />
             <span style={{ fontFamily: "'Orbitron', sans-serif" }} className="text-base font-bold tracking-wide text-foreground">
               BrawlAlly
             </span>
