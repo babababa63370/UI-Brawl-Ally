@@ -13,6 +13,16 @@ const app: Express = express();
 // → Express lit X-Forwarded-Proto pour req.protocol et req.secure
 app.set("trust proxy", 1);
 
+// Fallback si le proxy ne forwarde pas X-Forwarded-Proto
+// FORCE_HTTPS=true → on marque toutes les requêtes comme sécurisées
+if (process.env.FORCE_HTTPS === "true") {
+  app.use((req, _res, next) => {
+    Object.defineProperty(req, "secure", { get: () => true, configurable: true });
+    Object.defineProperty(req, "protocol", { get: () => "https", configurable: true });
+    next();
+  });
+}
+
 const SESSION_SECRET = process.env.SESSION_SECRET ?? "dev-secret-change-me";
 const PgSession = connectPgSimple(session);
 
