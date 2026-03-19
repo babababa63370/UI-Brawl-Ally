@@ -21,6 +21,7 @@ COPY artifacts/my-website/ artifacts/my-website/
 
 RUN PORT=3000 BASE_PATH=/ pnpm --filter @workspace/my-website run build
 RUN pnpm run typecheck && pnpm --filter @workspace/api-server run build
+RUN find /app -path "*/connect-pg-simple/table.sql" | head -1 | xargs -I{} cp {} /app/cps-table.sql
 
 # ─── Stage 2 : Production ─────────────────────────────────────────────────────
 FROM node:24-slim AS production
@@ -39,7 +40,7 @@ RUN pnpm install --no-frozen-lockfile --filter @workspace/api-server --prod
 COPY --from=builder /app/artifacts/api-server/dist/index.cjs ./server.cjs
 COPY --from=builder /app/artifacts/my-website/dist/public/ ./public/
 # connect-pg-simple lit table.sql via __dirname (= /app/ dans le bundle)
-COPY --from=builder /app/node_modules/connect-pg-simple/table.sql ./table.sql
+COPY --from=builder /app/cps-table.sql ./table.sql
 
 ENV NODE_ENV=production
 ENV PORT=8080
