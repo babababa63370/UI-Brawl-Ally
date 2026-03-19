@@ -10,13 +10,11 @@ import router from "./routes";
 const app: Express = express();
 
 const SESSION_SECRET = process.env.SESSION_SECRET ?? "dev-secret-change-me";
-
 const PgSession = connectPgSimple(session);
 
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
 app.use(
   session({
     store: new PgSession({
@@ -41,7 +39,8 @@ app.use("/api", router);
 const staticDir = process.env.STATIC_DIR;
 if (staticDir && fs.existsSync(staticDir)) {
   app.use(express.static(staticDir));
-  app.get("*", (_req, res) => {
+  // ✅ Nouvelle syntaxe compatible Express 5 / path-to-regexp v8
+  app.get(/(.*)/, (_req, res) => {
     res.sendFile(path.join(staticDir, "index.html"));
   });
 }
