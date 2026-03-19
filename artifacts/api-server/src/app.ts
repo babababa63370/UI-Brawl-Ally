@@ -35,6 +35,9 @@ app.use(
       pool,
       tableName: "user_sessions",
       createTableIfMissing: true,
+      errorLog: (err: unknown) => {
+        console.error("[session-store] Erreur PostgreSQL :", err);
+      },
     }),
     secret: SESSION_SECRET,
     resave: false,
