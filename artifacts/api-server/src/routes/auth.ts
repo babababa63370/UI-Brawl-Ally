@@ -34,14 +34,17 @@ router.get("/discord", (req, res) => {
 
 router.get("/discord/callback", async (req, res) => {
   const code = req.query["code"] as string | undefined;
+  console.log("[auth] callback reçu — code présent :", !!code);
 
   if (!code) {
+    console.error("[auth] callback sans code — query params :", req.query);
     res.redirect("/?auth=error");
     return;
   }
 
   try {
     const redirectUri = getRedirectUri(req);
+    console.log("[auth] échange de token avec redirect_uri :", redirectUri);
 
     const tokenRes = await fetch("https://discord.com/api/oauth2/token", {
       method: "POST",
@@ -56,18 +59,21 @@ router.get("/discord/callback", async (req, res) => {
     });
 
     if (!tokenRes.ok) {
-      console.error("Discord token exchange failed:", await tokenRes.text());
+      const body = await tokenRes.text();
+      console.error("[auth] token exchange échoué :", tokenRes.status, body);
       res.redirect("/?auth=error");
       return;
     }
 
     const tokenData = (await tokenRes.json()) as { access_token: string };
+    console.log("[auth] token obtenu — récupération du profil Discord");
 
     const userRes = await fetch("https://discord.com/api/users/@me", {
       headers: { Authorization: `Bearer ${tokenData.access_token}` },
     });
 
     if (!userRes.ok) {
+      console.error("[auth] récupération profil échouée :", userRes.status, await userRes.text());
       res.redirect("/?auth=error");
       return;
     }
@@ -79,6 +85,8 @@ router.get("/discord/callback", async (req, res) => {
       avatar?: string;
       email?: string;
     };
+
+    console.log("[auth] profil Discord OK — id :", user.id, "username :", user.username);
 
     const session = (req as any).session;
     session.user = {
@@ -93,14 +101,15 @@ router.get("/discord/callback", async (req, res) => {
 
     session.save((err: unknown) => {
       if (err) {
-        console.error("Session save error:", err);
+        console.error("[auth] session save échoué :", err);
         res.redirect("/?auth=error");
         return;
       }
+      console.log("[auth] session sauvegardée — redirection vers /settings");
       res.redirect("/settings");
     });
   } catch (err) {
-    console.error("Discord OAuth error:", err);
+    console.error("[auth] erreur inattendue dans le callback :", err);
     res.redirect("/?auth=error");
   }
 });
