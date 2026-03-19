@@ -123,6 +123,21 @@ router.get("/me", (req, res) => {
   res.status(401).json({ user: null });
 });
 
+router.get("/debug", (req, res) => {
+  const session = (req as any).session;
+  res.json({
+    sessionID: session?.id ?? null,
+    hasUser: !!session?.user,
+    cookieHeader: req.headers.cookie ?? null,
+    secure: req.secure,
+    protocol: req.protocol,
+    cookieSettings: {
+      secure: session?.cookie?.secure ?? null,
+      sameSite: session?.cookie?.sameSite ?? null,
+    },
+  });
+});
+
 router.post("/logout", (req, res) => {
   const session = (req as any).session;
   session.destroy(() => {
