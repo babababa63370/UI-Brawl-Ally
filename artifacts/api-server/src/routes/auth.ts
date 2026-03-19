@@ -26,8 +26,9 @@ router.get("/discord", (req, res) => {
     res.status(500).json({ error: "DISCORD_CLIENT_ID not configured" });
     return;
   }
-  const redirectUri = encodeURIComponent(getRedirectUri(req));
-  const url = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${redirectUri}&response_type=code&scope=identify%20email`;
+  const redirectUri = getRedirectUri(req);
+  console.log(`[auth] redirect_uri envoyée à Discord : ${redirectUri}`);
+  const url = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=identify%20email`;
   res.redirect(url);
 });
 
