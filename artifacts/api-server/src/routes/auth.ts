@@ -91,7 +91,14 @@ router.get("/discord/callback", async (req, res) => {
       email: user.email ?? null,
     };
 
-    res.redirect("/settings");
+    session.save((err: unknown) => {
+      if (err) {
+        console.error("Session save error:", err);
+        res.redirect("/?auth=error");
+        return;
+      }
+      res.redirect("/settings");
+    });
   } catch (err) {
     console.error("Discord OAuth error:", err);
     res.redirect("/?auth=error");
