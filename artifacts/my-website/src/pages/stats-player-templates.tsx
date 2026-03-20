@@ -52,81 +52,108 @@ interface BattleEntry {
   };
 }
 
-/* ── Mock data (format Meonix) ── */
+/* ── Real data — #QUYCVC2 (RLM|sans) ── */
 const PLAYER = {
-  name: "SpaceMeonix",
-  nameColor: "FFD700",
-  tag: "MEONIXME",
-  icon: "https://cdn.brawlify.com/profile-icons/regular/28000000.png",
-  trophies: 58432,
-  highestTrophies: 62100,
-  expLevel: 147,
-  club: { name: "Space Station" },
+  name: "RLM|sans",
+  nameColor: "ffffff",
+  tag: "QUYCVC2",
+  icon: "http://cdn.meonix.me/cdn/profile-icons/regular/28000044.png",
+  trophies: 114411,
+  highestTrophies: 114411,
+  expLevel: 500,
+  club: { name: "sansbs" },
 };
 
 const BATTLE_LOG: BattleEntry[] = [
   {
-    battleTime: "20260320T141200.000Z",
-    event: { id: 15000268, mode: "gemGrab", map: "Hard Rock Mine", mapImage: null },
+    battleTime: "20260320T015731.000Z",
+    event: { id: 15000082, mode: "bounty", map: "Layer Cake", mapImage: "http://cdn.meonix.me/cdn/maps/regular/15000082.png" },
     playerPerspective: {
-      me: { tag: "#MEONIXME", name: "SpaceMeonix", brawler: { id: 16000000, name: "Shelly", power: 11, trophies: 542, assets: { image: "https://cdn.brawlify.com/brawler-bs/regular/16000000.png" } } },
-      result: "victory", rank: null, trophyChange: 8, isStarPlayer: true, teamIndex: 0,
+      me: { tag: "#QUYCVC2", name: "RLM|sans", brawler: { id: 16000085, name: "Kenji", power: -1, trophies: -1, assets: { image: "http://cdn.meonix.me/cdn/brawlers/border/16000085.png" } } },
+      result: "defeat", rank: null, trophyChange: null, isStarPlayer: false, teamIndex: 1,
     },
-    battle: { mode: "gemGrab", type: "ranked", duration: 142 },
+    battle: { mode: "bounty", type: "friendly", duration: 98 },
   },
   {
-    battleTime: "20260320T135100.000Z",
-    event: { id: 15000370, mode: "brawlBall", map: "Pinhole Punt", mapImage: null },
+    battleTime: "20260320T015533.000Z",
+    event: { id: 15000082, mode: "bounty", map: "Layer Cake", mapImage: "http://cdn.meonix.me/cdn/maps/regular/15000082.png" },
     playerPerspective: {
-      me: { tag: "#MEONIXME", name: "SpaceMeonix", brawler: { id: 16000001, name: "Colt", power: 10, trophies: 398, assets: { image: "https://cdn.brawlify.com/brawler-bs/regular/16000001.png" } } },
-      result: "defeat", rank: null, trophyChange: -4, isStarPlayer: false, teamIndex: 1,
+      me: { tag: "#QUYCVC2", name: "RLM|sans", brawler: { id: 16000085, name: "Kenji", power: -1, trophies: -1, assets: { image: "http://cdn.meonix.me/cdn/brawlers/border/16000085.png" } } },
+      result: "defeat", rank: null, trophyChange: null, isStarPlayer: false, teamIndex: 1,
     },
-    battle: { mode: "brawlBall", type: "ranked", duration: 180 },
+    battle: { mode: "bounty", type: "friendly", duration: null },
   },
   {
-    battleTime: "20260320T132700.000Z",
-    event: { id: 15000006, mode: "soloShowdown", map: "Skull Creek", mapImage: null },
+    battleTime: "20260320T015002.000Z",
+    event: { id: 15000082, mode: "bounty", map: "Layer Cake", mapImage: "http://cdn.meonix.me/cdn/maps/regular/15000082.png" },
     playerPerspective: {
-      me: { tag: "#MEONIXME", name: "SpaceMeonix", brawler: { id: 16000006, name: "El Primo", power: 9, trophies: 610, assets: { image: "https://cdn.brawlify.com/brawler-bs/regular/16000006.png" } } },
-      result: "victory", rank: 1, trophyChange: 10, isStarPlayer: false, teamIndex: null,
+      me: { tag: "#QUYCVC2", name: "RLM|sans", brawler: { id: 16000094, name: "Kaze", power: -1, trophies: -1, assets: { image: "http://cdn.meonix.me/cdn/brawlers/border/16000094.png" } } },
+      result: "defeat", rank: null, trophyChange: null, isStarPlayer: false, teamIndex: 0,
     },
-    battle: { mode: "soloShowdown", type: "ranked", duration: null },
+    battle: { mode: "bounty", type: "friendly", duration: null },
   },
   {
-    battleTime: "20260320T130500.000Z",
-    event: { id: 15000144, mode: "heist", map: "Safe Zone", mapImage: null },
+    battleTime: "20260320T014715.000Z",
+    event: { id: 15000082, mode: "bounty", map: "Layer Cake", mapImage: "http://cdn.meonix.me/cdn/maps/regular/15000082.png" },
     playerPerspective: {
-      me: { tag: "#MEONIXME", name: "SpaceMeonix", brawler: { id: 16000004, name: "Jessie", power: 11, trophies: 720, assets: { image: "https://cdn.brawlify.com/brawler-bs/regular/16000004.png" } } },
-      result: "draw", rank: null, trophyChange: 0, isStarPlayer: false, teamIndex: 0,
+      me: { tag: "#QUYCVC2", name: "RLM|sans", brawler: { id: 16000072, name: "Pearl", power: -1, trophies: -1, assets: { image: "http://cdn.meonix.me/cdn/brawlers/border/16000072.png" } } },
+      result: "victory", rank: null, trophyChange: null, isStarPlayer: true, teamIndex: 0,
     },
-    battle: { mode: "heist", type: "ranked", duration: 180 },
+    battle: { mode: "bounty", type: "friendly", duration: null },
   },
   {
-    battleTime: "20260320T124200.000Z",
-    event: { id: 15000270, mode: "hotZone", map: "Open Business", mapImage: null },
+    battleTime: "20260320T014548.000Z",
+    event: { id: 15000082, mode: "bounty", map: "Layer Cake", mapImage: "http://cdn.meonix.me/cdn/maps/regular/15000082.png" },
     playerPerspective: {
-      me: { tag: "#MEONIXME", name: "SpaceMeonix", brawler: { id: 16000058, name: "Rosa", power: 10, trophies: 480, assets: { image: "https://cdn.brawlify.com/brawler-bs/regular/16000058.png" } } },
-      result: "victory", rank: null, trophyChange: 6, isStarPlayer: false, teamIndex: 0,
+      me: { tag: "#QUYCVC2", name: "RLM|sans", brawler: { id: 16000094, name: "Kaze", power: -1, trophies: -1, assets: { image: "http://cdn.meonix.me/cdn/brawlers/border/16000094.png" } } },
+      result: "victory", rank: null, trophyChange: null, isStarPlayer: true, teamIndex: 1,
     },
-    battle: { mode: "hotZone", type: "ranked", duration: 150 },
+    battle: { mode: "bounty", type: "friendly", duration: null },
   },
   {
-    battleTime: "20260320T121800.000Z",
-    event: { id: 15000098, mode: "bounty", map: "Excel", mapImage: null },
+    battleTime: "20260320T014329.000Z",
+    event: { id: 15000082, mode: "bounty", map: "Layer Cake", mapImage: "http://cdn.meonix.me/cdn/maps/regular/15000082.png" },
     playerPerspective: {
-      me: { tag: "#MEONIXME", name: "SpaceMeonix", brawler: { id: 16000003, name: "Brock", power: 11, trophies: 890, assets: { image: "https://cdn.brawlify.com/brawler-bs/regular/16000003.png" } } },
-      result: "defeat", rank: null, trophyChange: -4, isStarPlayer: false, teamIndex: 1,
+      me: { tag: "#QUYCVC2", name: "RLM|sans", brawler: { id: 16000094, name: "Kaze", power: -1, trophies: -1, assets: { image: "http://cdn.meonix.me/cdn/brawlers/border/16000094.png" } } },
+      result: "victory", rank: null, trophyChange: null, isStarPlayer: false, teamIndex: 1,
     },
-    battle: { mode: "bounty", type: "ranked", duration: 120 },
+    battle: { mode: "bounty", type: "friendly", duration: null },
   },
   {
-    battleTime: "20260320T115500.000Z",
-    event: { id: 15000184, mode: "gemGrab", map: "Crystal Arcade", mapImage: null },
+    battleTime: "20260320T013747.000Z",
+    event: { id: 15000292, mode: "hotZone", map: "Open Business", mapImage: "http://cdn.meonix.me/cdn/maps/regular/15000292.png" },
     playerPerspective: {
-      me: { tag: "#MEONIXME", name: "SpaceMeonix", brawler: { id: 16000002, name: "Nita", power: 11, trophies: 654, assets: { image: "https://cdn.brawlify.com/brawler-bs/regular/16000002.png" } } },
-      result: "victory", rank: null, trophyChange: 8, isStarPlayer: true, teamIndex: 0,
+      me: { tag: "#QUYCVC2", name: "RLM|sans", brawler: { id: 16000085, name: "Kenji", power: -1, trophies: -1, assets: { image: "http://cdn.meonix.me/cdn/brawlers/border/16000085.png" } } },
+      result: "defeat", rank: null, trophyChange: null, isStarPlayer: false, teamIndex: 1,
     },
-    battle: { mode: "gemGrab", type: "ranked", duration: 165 },
+    battle: { mode: "hotZone", type: "friendly", duration: null },
+  },
+  {
+    battleTime: "20260320T013602.000Z",
+    event: { id: 15000292, mode: "hotZone", map: "Open Business", mapImage: "http://cdn.meonix.me/cdn/maps/regular/15000292.png" },
+    playerPerspective: {
+      me: { tag: "#QUYCVC2", name: "RLM|sans", brawler: { id: 16000085, name: "Kenji", power: -1, trophies: -1, assets: { image: "http://cdn.meonix.me/cdn/brawlers/border/16000085.png" } } },
+      result: "victory", rank: null, trophyChange: null, isStarPlayer: false, teamIndex: 1,
+    },
+    battle: { mode: "hotZone", type: "friendly", duration: null },
+  },
+  {
+    battleTime: "20260320T013345.000Z",
+    event: { id: 15000292, mode: "hotZone", map: "Open Business", mapImage: "http://cdn.meonix.me/cdn/maps/regular/15000292.png" },
+    playerPerspective: {
+      me: { tag: "#QUYCVC2", name: "RLM|sans", brawler: { id: 16000085, name: "Kenji", power: -1, trophies: -1, assets: { image: "http://cdn.meonix.me/cdn/brawlers/border/16000085.png" } } },
+      result: "defeat", rank: null, trophyChange: null, isStarPlayer: false, teamIndex: 1,
+    },
+    battle: { mode: "hotZone", type: "friendly", duration: null },
+  },
+  {
+    battleTime: "20260320T012826.000Z",
+    event: { id: 15000292, mode: "hotZone", map: "Open Business", mapImage: "http://cdn.meonix.me/cdn/maps/regular/15000292.png" },
+    playerPerspective: {
+      me: { tag: "#QUYCVC2", name: "RLM|sans", brawler: { id: 16000085, name: "Kenji", power: -1, trophies: -1, assets: { image: "http://cdn.meonix.me/cdn/brawlers/border/16000085.png" } } },
+      result: "victory", rank: null, trophyChange: null, isStarPlayer: false, teamIndex: 1,
+    },
+    battle: { mode: "hotZone", type: "friendly", duration: null },
   },
 ];
 
