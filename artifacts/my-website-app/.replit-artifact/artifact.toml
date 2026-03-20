@@ -1,5 +1,5 @@
 kind = "web"
-previewPath = "/"
+previewPath = "/my-website-app/"
 title = "My Website"
 version = "1.0.0"
 id = "artifacts/my-website-app"
