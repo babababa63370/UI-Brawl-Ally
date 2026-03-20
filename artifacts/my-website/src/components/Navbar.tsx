@@ -15,7 +15,7 @@ const navItems: NavItem[] = [
   {
     label: "Statistiques",
     children: [
-      { label: "Joueurs", href: "#" },
+      { label: "Joueurs", href: "/stats/player/templates" },
       { label: "Classement", href: "#" },
       { label: "Meta", href: "#" },
       { label: "D'autres en préparation", disabled: true },

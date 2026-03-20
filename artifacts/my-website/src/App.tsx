@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Navbar from "@/components/Navbar";
 import Settings from "@/pages/settings";
+import StatsPlayerTemplates from "@/pages/stats-player-templates";
 import BlobBackground from "@/components/BlobBackground";
 import { AuthProvider } from "@/contexts/auth";
 import { BarChart2, Trophy, Swords, Users, Search, Settings2, Crown } from "lucide-react";
@@ -99,6 +100,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/settings" component={Settings} />
+      <Route path="/stats/player/templates" component={StatsPlayerTemplates} />
       <Route component={NotFound} />
     </Switch>
   );
