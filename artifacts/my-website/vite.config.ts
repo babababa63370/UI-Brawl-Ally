@@ -66,6 +66,17 @@ export default defineConfig({
       strict: true,
       deny: ["**/.*"],
     },
+    proxy: {
+      "/api": {
+        target: "http://localhost:3001",
+        changeOrigin: true,
+        configure: (proxy) => {
+          proxy.on("error", (err) => {
+            console.error("[vite-proxy] error", err.message);
+          });
+        },
+      },
+    },
   },
   preview: {
     port,
