@@ -224,7 +224,7 @@ export default function StatsPlayer() {
               </span>
             </div>
 
-            <div className="divide-y divide-border/20">
+            <div className="divide-y divide-border/20 overflow-y-auto max-h-64">
               {BATTLE_LOG.map((battle) => {
                 const cfg = RESULT_CONFIG[battle.result as keyof typeof RESULT_CONFIG];
                 return (
