@@ -2,11 +2,7 @@ import Navbar from "@/components/Navbar";
 import BlobBackground from "@/components/BlobBackground";
 import {
   Trophy,
-  Shield,
-  Zap,
-  Star,
   Users,
-  TrendingUp,
   Swords,
   Clock,
   ChevronUp,
@@ -139,10 +135,8 @@ export default function StatsPlayer() {
       <BlobBackground />
       <Navbar />
 
-      <main className="relative z-10 max-w-5xl mx-auto px-4 pt-24 pb-20 space-y-4">
-
-        {/* ── Top section: identity (left) + battle log (right) ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+      <main className="relative z-10 max-w-5xl mx-auto px-4 pt-24 pb-20">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 items-start">
 
           {/* ── LEFT: Player identity card ── */}
           <div className="lg:col-span-2 rounded-2xl border border-border/50 bg-card/70 backdrop-blur-sm overflow-hidden">
@@ -217,7 +211,7 @@ export default function StatsPlayer() {
             </div>
           </div>
 
-          {/* ── RIGHT: Battle Log ── */}
+          {/* ── RIGHT: Battle Log (full height) ── */}
           <div className="lg:col-span-3 rounded-2xl border border-border/50 bg-card/70 backdrop-blur-sm overflow-hidden flex flex-col">
             <div className="px-5 pt-5 pb-3 flex items-center gap-2 border-b border-border/30">
               <Swords size={14} className="text-muted-foreground" />
@@ -230,22 +224,22 @@ export default function StatsPlayer() {
               </span>
             </div>
 
-            <div className="flex-1 overflow-y-auto divide-y divide-border/20 max-h-[340px]">
+            <div className="divide-y divide-border/20">
               {BATTLE_LOG.map((battle) => {
                 const cfg = RESULT_CONFIG[battle.result as keyof typeof RESULT_CONFIG];
                 return (
                   <div
                     key={battle.id}
-                    className="flex items-center gap-3 px-4 py-3 hover:bg-accent/20 transition-colors"
+                    className="flex items-center gap-3 px-4 py-3.5 hover:bg-accent/20 transition-colors"
                   >
                     {/* Result bar */}
-                    <div className={`w-0.5 h-8 rounded-full shrink-0 ${cfg.bar}`} />
+                    <div className={`w-0.5 h-9 rounded-full shrink-0 ${cfg.bar}`} />
 
                     {/* Brawler icon */}
                     <img
                       src={battle.brawlerIcon}
                       alt={battle.brawler}
-                      className="w-9 h-9 rounded-lg object-contain bg-background/40 border border-border/30 p-0.5 shrink-0"
+                      className="w-10 h-10 rounded-lg object-contain bg-background/40 border border-border/30 p-0.5 shrink-0"
                       onError={(e) => {
                         (e.target as HTMLImageElement).style.opacity = "0.3";
                       }}
@@ -281,87 +275,8 @@ export default function StatsPlayer() {
               })}
             </div>
           </div>
+
         </div>
-
-        {/* ── Bottom: Player Stats ── */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 px-1">
-            <TrendingUp size={13} className="text-muted-foreground" />
-            <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-              Statistiques
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              {
-                icon: <Zap size={15} className="text-green-400" />,
-                label: "Victoires 3v3",
-                value: fmt(PLAYER.victories3v3),
-                sub: null,
-              },
-              {
-                icon: <Star size={15} className="text-purple-400" />,
-                label: "Victoires Solo",
-                value: fmt(PLAYER.soloVictories),
-                sub: null,
-              },
-              {
-                icon: <Users size={15} className="text-blue-400" />,
-                label: "Victoires Duo",
-                value: fmt(PLAYER.duoVictories),
-                sub: null,
-              },
-              {
-                icon: <Shield size={15} className="text-orange-400" />,
-                label: "Brawlers",
-                value: String(PLAYER.brawlers),
-                sub: "débloqués",
-              },
-            ].map(({ icon, label, value, sub }) => (
-              <div
-                key={label}
-                className="rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm p-4"
-              >
-                <div className="flex items-center gap-1.5 mb-2">
-                  {icon}
-                  <span className="text-[11px] text-muted-foreground uppercase tracking-wide">
-                    {label}
-                  </span>
-                </div>
-                <p className="text-2xl font-black text-foreground">{value}</p>
-                {sub && (
-                  <p className="text-[11px] text-muted-foreground mt-0.5">{sub}</p>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {/* XP */}
-          <div className="rounded-2xl border border-border/50 bg-card/60 backdrop-blur-sm p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <TrendingUp size={15} className="text-muted-foreground" />
-              <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-                Expérience
-              </span>
-              <span className="ml-auto text-sm text-muted-foreground">
-                {fmt(PLAYER.expPoints)} XP
-              </span>
-            </div>
-            <div className="flex items-end justify-between mb-2">
-              <p className="text-3xl font-black text-foreground">
-                Niv. {PLAYER.expLevel}
-              </p>
-            </div>
-            <div className="h-2 rounded-full bg-accent/50 overflow-hidden">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500"
-                style={{ width: "62%" }}
-              />
-            </div>
-          </div>
-        </div>
-
       </main>
     </div>
   );
