@@ -103,6 +103,33 @@ router.post("/link", async (req, res) => {
   }
 });
 
+router.get("/player/:tag/battlelog", async (req, res) => {
+  const session = (req as any).session;
+  if (!session?.user) {
+    res.status(401).json({ error: "Non connecté" });
+    return;
+  }
+
+  const tag = req.params.tag.replace(/^#/, "").toUpperCase();
+
+  try {
+    const r = await fetch(`${MEONIX_API}/api/player/${tag}/battlelog`, {
+      headers: meonixHeaders(),
+    });
+
+    if (!r.ok) {
+      res.status(r.status).json({ error: "Battle log introuvable" });
+      return;
+    }
+
+    const data = await r.json();
+    res.json(data);
+  } catch (err) {
+    console.error("Erreur brawl/battlelog:", err);
+    res.status(503).json({ error: "Impossible de contacter l'API" });
+  }
+});
+
 router.delete("/unlink", async (req, res) => {
   const session = (req as any).session;
   if (!session?.user) {
