@@ -1,0 +1,175 @@
+from flask import Blueprint, jsonify, current_app
+import requests
+from requests.exceptions import ConnectionError, Timeout, RequestException
+from utils.cdn_mapper import CDN_BASE
+
+battlelog_bp = Blueprint('battlelog', __name__)
+
+BS_ERROR_MESSAGES = {
+    400: "Requête invalide (tag mal formé ?)",
+    403: "Clé API invalide ou accès refusé",
+    404: "Joueur introuvable",
+    429: "Trop de requêtes — réessaie dans quelques secondes",
+    500: "Erreur serveur Brawl Stars",
+    503: "API Brawl Stars temporairement indisponible",
+}
+
+
+def _enrich_player(p):
+    """Enrichit un joueur avec ses assets brawler CDN."""
+    if not p:
+        return None
+    brawler = p.get("brawler", {})
+    b_id = brawler.get("id")
+    return {
+        "tag": p.get("tag"),
+        "name": p.get("name"),
+        "brawler": {
+            "id": b_id,
+            "name": brawler.get("name"),
+            "power": brawler.get("power"),
+            "trophies": brawler.get("trophies"),
+            "assets": {
+                "image": f"{CDN_BASE}/brawlers/border/{b_id}.png" if b_id else None,
+            }
+        }
+    }
+
+
+def _find_player_in_battle(battle, player_tag):
+    """
+    Retrouve le joueur dans la bataille par son tag.
+    Retourne (player_data, team_index) — team_index est None en solo/duo.
+    """
+    raw_teams = battle.get("teams") or []
+    raw_players = battle.get("players") or []
+
+    for i, team in enumerate(raw_teams):
+        for p in team:
+            if p.get("tag", "").strip("#").upper() == player_tag:
+                return p, i
+
+    for p in raw_players:
+        if p.get("tag", "").strip("#").upper() == player_tag:
+            return p, None
+
+    return None, None
+
+
+def _get_result_from_rank(rank):
+    """Convertit un classement Showdown en résultat lisible."""
+    if rank is None:
+        return None
+    if rank <= 2:
+        return "victory"
+    elif rank <= 5:
+        return "draw"
+    return "defeat"
+
+
+def _enrich_battle(battle_entry, player_tag):
+    """Enrichit une entrée du battlelog avec assets CDN + perspective du joueur."""
+    battle = battle_entry.get("battle", {})
+    event = battle_entry.get("event", {})
+
+    # --- Map ---
+    map_id = event.get("id")
+    enriched_event = {
+        "id": map_id,
+        "mode": event.get("mode"),
+        "map": event.get("map"),
+        "mapImage": f"{CDN_BASE}/maps/regular/{map_id}.png" if map_id else None,
+    }
+
+    # --- Équipes / Joueurs ---
+    raw_teams = battle.get("teams")
+    raw_players = battle.get("players")
+
+    enriched_teams = None
+    enriched_players = None
+
+    if raw_teams:
+        enriched_teams = [
+            [_enrich_player(p) for p in team]
+            for team in raw_teams
+        ]
+    elif raw_players:
+        enriched_players = [_enrich_player(p) for p in raw_players]
+
+    # --- Star Player ---
+    star_player = battle.get("starPlayer")
+    enriched_star = _enrich_player(star_player) if star_player else None
+
+    # --- Perspective du joueur ---
+    me_raw, my_team_index = _find_player_in_battle(battle, player_tag)
+    me = _enrich_player(me_raw) if me_raw else None
+
+    # Résultat & rank selon le mode
+    result = battle.get("result")
+    rank = battle.get("rank")
+
+    # En Showdown (solo/duo), le rank est au niveau de la bataille
+    if raw_players:
+        result = _get_result_from_rank(rank)
+
+    is_star = bool(
+        star_player and
+        star_player.get("tag", "").strip("#").upper() == player_tag
+    )
+
+    player_perspective = {
+        "me": me,                        # Brawler joué + infos du joueur
+        "result": result,                # "victory" / "defeat" / "draw"
+        "rank": rank,                    # Classement Showdown (1-10), null en 3v3
+        "trophyChange": battle.get("trophyChange"),
+        "isStarPlayer": is_star,         # True si le joueur est le star player
+        "teamIndex": my_team_index,      # 0 ou 1 en 3v3, null en solo/duo
+    }
+
+    return {
+        "battleTime": battle_entry.get("battleTime"),
+        "event": enriched_event,
+        "playerPerspective": player_perspective,
+        "battle": {
+            "mode": battle.get("mode"),
+            "type": battle.get("type"),
+            "duration": battle.get("duration"),
+            "starPlayer": enriched_star,
+            "teams": enriched_teams,
+            "players": enriched_players,
+        }
+    }
+
+
+@battlelog_bp.route('/player/<string:tag>/battlelog')
+def get_battlelog(tag):
+    api_key = current_app.config['BS_API_KEY']
+    headers = {"Authorization": f"Bearer {api_key}", "Accept": "application/json"}
+
+    player_tag = tag.strip("#").upper()
+    url = f"https://api.brawlstars.com/v1/players/%23{player_tag}/battlelog"
+
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+    except ConnectionError:
+        return jsonify({"error": "Impossible de contacter l'API Brawl Stars (connexion refusée)"}), 503
+    except Timeout:
+        return jsonify({"error": "L'API Brawl Stars a mis trop de temps à répondre"}), 504
+    except RequestException as e:
+        return jsonify({"error": f"Erreur réseau inattendue : {str(e)}"}), 502
+
+    if response.status_code != 200:
+        message = BS_ERROR_MESSAGES.get(response.status_code, f"Erreur inconnue ({response.status_code})")
+        return jsonify({"error": message}), response.status_code
+
+    try:
+        data = response.json()
+    except ValueError:
+        return jsonify({"error": "Réponse invalide reçue de l'API Brawl Stars"}), 502
+
+    try:
+        battles = [_enrich_battle(entry, player_tag) for entry in data.get("items", [])]
+    except Exception as e:
+        return jsonify({"error": f"Erreur lors du traitement du battlelog : {str(e)}"}), 500
+
+    return jsonify({"battlelog": battles, "total": len(battles)})
