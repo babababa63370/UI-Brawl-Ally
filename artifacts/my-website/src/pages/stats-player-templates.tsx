@@ -8,8 +8,51 @@ import {
   ChevronUp,
   ChevronDown,
   Minus,
+  Star,
 } from "lucide-react";
 
+/* ── Types (format Meonix enrichi) ── */
+interface BrawlerAssets {
+  image: string | null;
+}
+interface Brawler {
+  id: number;
+  name: string;
+  power: number;
+  trophies: number;
+  assets: BrawlerAssets;
+}
+interface BattlePlayer {
+  tag: string;
+  name: string;
+  brawler: Brawler;
+}
+interface PlayerPerspective {
+  me: BattlePlayer | null;
+  result: "victory" | "defeat" | "draw" | null;
+  rank: number | null;
+  trophyChange: number | null;
+  isStarPlayer: boolean;
+  teamIndex: number | null;
+}
+interface BattleEvent {
+  id: number | null;
+  mode: string | null;
+  map: string | null;
+  mapImage: string | null;
+}
+interface BattleEntry {
+  battleTime: string;
+  event: BattleEvent;
+  playerPerspective: PlayerPerspective;
+  battle: {
+    mode: string | null;
+    type: string | null;
+    duration: number | null;
+  };
+}
+
+/* ── Mock data (format Meonix) ── */
 const PLAYER = {
   name: "SpaceMeonix",
   nameColor: "FFD700",
@@ -18,112 +61,135 @@ const PLAYER = {
   trophies: 58432,
   highestTrophies: 62100,
   expLevel: 147,
-  expPoints: 284920,
   club: { name: "Space Station" },
-  victories3v3: 4218,
-  soloVictories: 312,
-  duoVictories: 891,
-  brawlers: 77,
 };
 
-const BATTLE_LOG = [
+const BATTLE_LOG: BattleEntry[] = [
   {
-    id: 1,
-    mode: "Gem Grab",
-    map: "Hard Rock Mine",
-    result: "victory",
-    trophyChange: +8,
-    timeAgo: "il y a 4 min",
-    brawler: "Shelly",
-    brawlerIcon: "https://cdn.brawlify.com/brawler-bs/regular/16000000.png",
+    battleTime: "20260320T141200.000Z",
+    event: { id: 15000268, mode: "gemGrab", map: "Hard Rock Mine", mapImage: null },
+    playerPerspective: {
+      me: { tag: "#MEONIXME", name: "SpaceMeonix", brawler: { id: 16000000, name: "Shelly", power: 11, trophies: 542, assets: { image: "https://cdn.brawlify.com/brawler-bs/regular/16000000.png" } } },
+      result: "victory", rank: null, trophyChange: 8, isStarPlayer: true, teamIndex: 0,
+    },
+    battle: { mode: "gemGrab", type: "ranked", duration: 142 },
   },
   {
-    id: 2,
-    mode: "Brawl Ball",
-    map: "Pinhole Punt",
-    result: "defeat",
-    trophyChange: -4,
-    timeAgo: "il y a 18 min",
-    brawler: "Colt",
-    brawlerIcon: "https://cdn.brawlify.com/brawler-bs/regular/16000001.png",
+    battleTime: "20260320T135100.000Z",
+    event: { id: 15000370, mode: "brawlBall", map: "Pinhole Punt", mapImage: null },
+    playerPerspective: {
+      me: { tag: "#MEONIXME", name: "SpaceMeonix", brawler: { id: 16000001, name: "Colt", power: 10, trophies: 398, assets: { image: "https://cdn.brawlify.com/brawler-bs/regular/16000001.png" } } },
+      result: "defeat", rank: null, trophyChange: -4, isStarPlayer: false, teamIndex: 1,
+    },
+    battle: { mode: "brawlBall", type: "ranked", duration: 180 },
   },
   {
-    id: 3,
-    mode: "Showdown",
-    map: "Skull Creek",
-    result: "victory",
-    trophyChange: +10,
-    timeAgo: "il y a 32 min",
-    brawler: "El Primo",
-    brawlerIcon: "https://cdn.brawlify.com/brawler-bs/regular/16000006.png",
+    battleTime: "20260320T132700.000Z",
+    event: { id: 15000006, mode: "soloShowdown", map: "Skull Creek", mapImage: null },
+    playerPerspective: {
+      me: { tag: "#MEONIXME", name: "SpaceMeonix", brawler: { id: 16000006, name: "El Primo", power: 9, trophies: 610, assets: { image: "https://cdn.brawlify.com/brawler-bs/regular/16000006.png" } } },
+      result: "victory", rank: 1, trophyChange: 10, isStarPlayer: false, teamIndex: null,
+    },
+    battle: { mode: "soloShowdown", type: "ranked", duration: null },
   },
   {
-    id: 4,
-    mode: "Heist",
-    map: "Safe Zone",
-    result: "draw",
-    trophyChange: 0,
-    timeAgo: "il y a 47 min",
-    brawler: "Jessie",
-    brawlerIcon: "https://cdn.brawlify.com/brawler-bs/regular/16000004.png",
+    battleTime: "20260320T130500.000Z",
+    event: { id: 15000144, mode: "heist", map: "Safe Zone", mapImage: null },
+    playerPerspective: {
+      me: { tag: "#MEONIXME", name: "SpaceMeonix", brawler: { id: 16000004, name: "Jessie", power: 11, trophies: 720, assets: { image: "https://cdn.brawlify.com/brawler-bs/regular/16000004.png" } } },
+      result: "draw", rank: null, trophyChange: 0, isStarPlayer: false, teamIndex: 0,
+    },
+    battle: { mode: "heist", type: "ranked", duration: 180 },
   },
   {
-    id: 5,
-    mode: "Hot Zone",
-    map: "Open Business",
-    result: "victory",
-    trophyChange: +6,
-    timeAgo: "il y a 1h",
-    brawler: "Rosa",
-    brawlerIcon: "https://cdn.brawlify.com/brawler-bs/regular/16000058.png",
+    battleTime: "20260320T124200.000Z",
+    event: { id: 15000270, mode: "hotZone", map: "Open Business", mapImage: null },
+    playerPerspective: {
+      me: { tag: "#MEONIXME", name: "SpaceMeonix", brawler: { id: 16000058, name: "Rosa", power: 10, trophies: 480, assets: { image: "https://cdn.brawlify.com/brawler-bs/regular/16000058.png" } } },
+      result: "victory", rank: null, trophyChange: 6, isStarPlayer: false, teamIndex: 0,
+    },
+    battle: { mode: "hotZone", type: "ranked", duration: 150 },
   },
   {
-    id: 6,
-    mode: "Bounty",
-    map: "Excel",
-    result: "defeat",
-    trophyChange: -4,
-    timeAgo: "il y a 1h 20 min",
-    brawler: "Brock",
-    brawlerIcon: "https://cdn.brawlify.com/brawler-bs/regular/16000003.png",
+    battleTime: "20260320T121800.000Z",
+    event: { id: 15000098, mode: "bounty", map: "Excel", mapImage: null },
+    playerPerspective: {
+      me: { tag: "#MEONIXME", name: "SpaceMeonix", brawler: { id: 16000003, name: "Brock", power: 11, trophies: 890, assets: { image: "https://cdn.brawlify.com/brawler-bs/regular/16000003.png" } } },
+      result: "defeat", rank: null, trophyChange: -4, isStarPlayer: false, teamIndex: 1,
+    },
+    battle: { mode: "bounty", type: "ranked", duration: 120 },
   },
   {
-    id: 7,
-    mode: "Gem Grab",
-    map: "Crystal Arcade",
-    result: "victory",
-    trophyChange: +8,
-    timeAgo: "il y a 2h",
-    brawler: "Nita",
-    brawlerIcon: "https://cdn.brawlify.com/brawler-bs/regular/16000002.png",
+    battleTime: "20260320T115500.000Z",
+    event: { id: 15000184, mode: "gemGrab", map: "Crystal Arcade", mapImage: null },
+    playerPerspective: {
+      me: { tag: "#MEONIXME", name: "SpaceMeonix", brawler: { id: 16000002, name: "Nita", power: 11, trophies: 654, assets: { image: "https://cdn.brawlify.com/brawler-bs/regular/16000002.png" } } },
+      result: "victory", rank: null, trophyChange: 8, isStarPlayer: true, teamIndex: 0,
+    },
+    battle: { mode: "gemGrab", type: "ranked", duration: 165 },
   },
 ];
 
+/* ── Helpers ── */
 function fmt(n: number) {
   return n.toLocaleString("fr-FR");
+}
+
+function formatMode(mode: string | null): string {
+  if (!mode) return "Inconnu";
+  const map: Record<string, string> = {
+    gemGrab: "Gem Grab",
+    brawlBall: "Brawl Ball",
+    soloShowdown: "Showdown Solo",
+    duoShowdown: "Showdown Duo",
+    heist: "Heist",
+    bounty: "Bounty",
+    hotZone: "Hot Zone",
+    siege: "Siege",
+    knockout: "Knockout",
+    basketBrawl: "Basket Brawl",
+    superCity: "Super City",
+    holdTheTrophy: "Hold The Trophy",
+  };
+  return map[mode] ?? mode;
+}
+
+function formatTimeAgo(battleTime: string): string {
+  try {
+    const d = new Date(
+      battleTime.replace(
+        /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})/,
+        "$1-$2-$3T$4:$5:$6"
+      )
+    );
+    const diff = (Date.now() - d.getTime()) / 1000;
+    if (diff < 60) return "à l'instant";
+    if (diff < 3600) return `il y a ${Math.floor(diff / 60)} min`;
+    if (diff < 86400) return `il y a ${Math.floor(diff / 3600)}h`;
+    return `il y a ${Math.floor(diff / 86400)}j`;
+  } catch {
+    return "";
+  }
 }
 
 const RESULT_CONFIG = {
   victory: {
     label: "Victoire",
     color: "text-green-400",
-    bg: "bg-green-400/10 border-green-400/20",
     bar: "bg-green-400",
-    icon: <ChevronUp size={12} className="text-green-400" />,
+    icon: <ChevronUp size={11} className="text-green-400" />,
   },
   defeat: {
     label: "Défaite",
     color: "text-red-400",
-    bg: "bg-red-400/10 border-red-400/20",
     bar: "bg-red-400",
-    icon: <ChevronDown size={12} className="text-red-400" />,
+    icon: <ChevronDown size={11} className="text-red-400" />,
   },
   draw: {
     label: "Égalité",
     color: "text-muted-foreground",
-    bg: "bg-accent/20 border-border/30",
-    bar: "bg-muted-foreground",
-    icon: <Minus size={12} className="text-muted-foreground" />,
+    bar: "bg-muted-foreground/50",
+    icon: <Minus size={11} className="text-muted-foreground" />,
   },
 };
 
@@ -150,9 +216,7 @@ export default function StatsPlayer() {
                     src={PLAYER.icon}
                     alt="avatar"
                     className="w-16 h-16 rounded-xl border-2 border-border/60 object-contain bg-background/40 p-1"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.opacity = "0.3";
-                    }}
+                    onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.3"; }}
                   />
                   <span className="absolute -bottom-1.5 -right-1.5 bg-yellow-500 text-black text-[10px] font-black px-1.5 py-0.5 rounded-md leading-none">
                     {PLAYER.expLevel}
@@ -211,8 +275,8 @@ export default function StatsPlayer() {
             </div>
           </div>
 
-          {/* ── RIGHT: Battle Log (full height) ── */}
-          <div className="lg:col-span-3 rounded-2xl border border-border/50 bg-card/70 backdrop-blur-sm overflow-hidden flex flex-col">
+          {/* ── RIGHT: Battle Log ── */}
+          <div className="lg:col-span-3 rounded-2xl border border-border/50 bg-card/70 backdrop-blur-sm overflow-hidden">
             <div className="px-5 pt-5 pb-3 flex items-center gap-2 border-b border-border/30">
               <Swords size={14} className="text-muted-foreground" />
               <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
@@ -225,33 +289,43 @@ export default function StatsPlayer() {
             </div>
 
             <div className="divide-y divide-border/20 overflow-y-auto max-h-64">
-              {BATTLE_LOG.map((battle) => {
-                const cfg = RESULT_CONFIG[battle.result as keyof typeof RESULT_CONFIG];
+              {BATTLE_LOG.map((entry, i) => {
+                const pp = entry.playerPerspective;
+                const result = pp.result ?? "draw";
+                const cfg = RESULT_CONFIG[result] ?? RESULT_CONFIG.draw;
+                const brawler = pp.me?.brawler;
+
                 return (
                   <div
-                    key={battle.id}
-                    className="flex items-center gap-3 px-4 py-3.5 hover:bg-accent/20 transition-colors"
+                    key={i}
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-accent/20 transition-colors"
                   >
                     {/* Result bar */}
                     <div className={`w-0.5 h-9 rounded-full shrink-0 ${cfg.bar}`} />
 
                     {/* Brawler icon */}
                     <img
-                      src={battle.brawlerIcon}
-                      alt={battle.brawler}
-                      className="w-10 h-10 rounded-lg object-contain bg-background/40 border border-border/30 p-0.5 shrink-0"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.opacity = "0.3";
-                      }}
+                      src={brawler?.assets.image ?? ""}
+                      alt={brawler?.name ?? ""}
+                      className="w-9 h-9 rounded-lg object-contain bg-background/40 border border-border/30 p-0.5 shrink-0"
+                      onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.3"; }}
                     />
 
                     {/* Mode + Map */}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-foreground leading-tight truncate">
-                        {battle.mode}
-                      </p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-sm font-semibold text-foreground leading-tight truncate">
+                          {formatMode(entry.event.mode)}
+                        </p>
+                        {pp.isStarPlayer && (
+                          <Star size={11} className="text-yellow-400 shrink-0 fill-yellow-400" />
+                        )}
+                      </div>
                       <p className="text-[11px] text-muted-foreground truncate">
-                        {battle.map}
+                        {entry.event.map ?? "—"}
+                        {pp.rank != null && (
+                          <span className="ml-1.5 text-muted-foreground/60">· #{pp.rank}</span>
+                        )}
                       </p>
                     </div>
 
@@ -260,14 +334,14 @@ export default function StatsPlayer() {
                       <span className={`text-xs font-bold ${cfg.color}`}>
                         {cfg.label}
                       </span>
-                      <div className={`flex items-center gap-0.5 text-[11px] font-semibold ${cfg.color}`}>
-                        {cfg.icon}
-                        {battle.trophyChange !== 0
-                          ? `${battle.trophyChange > 0 ? "+" : ""}${battle.trophyChange}`
-                          : "±0"}
-                      </div>
+                      {pp.trophyChange != null && (
+                        <div className={`flex items-center gap-0.5 text-[11px] font-semibold ${cfg.color}`}>
+                          {cfg.icon}
+                          {pp.trophyChange > 0 ? `+${pp.trophyChange}` : pp.trophyChange === 0 ? "±0" : pp.trophyChange}
+                        </div>
+                      )}
                       <span className="text-[9px] text-muted-foreground/60">
-                        {battle.timeAgo}
+                        {formatTimeAgo(entry.battleTime)}
                       </span>
                     </div>
                   </div>
