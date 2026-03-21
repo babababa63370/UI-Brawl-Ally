@@ -1,6 +1,7 @@
+import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import BlobBackground from "@/components/BlobBackground";
-import { Trophy, Users, Swords, Clock, Star } from "lucide-react";
+import { Trophy, Users, Swords, Clock, Star, ChevronLeft, ChevronRight } from "lucide-react";
 
 /* ── Types ── */
 interface BrawlerPlayer { n: string; t: string; b: string | null; bi: string | null; tr: number; }
@@ -11,6 +12,7 @@ interface BattleEntry {
   teamIndex: number | null;
   isStarPlayer: boolean;
   trophyChange: number | null;
+  avgTrophies: number;
   teams: BrawlerPlayer[][];
   battle: { mode: string | null; type: string | null; duration: number | null };
 }
@@ -78,34 +80,48 @@ function timeAgo(bt: string) {
   } catch { return ""; }
 }
 
+/* Simulated avg trophies per match (API doesn't expose this for friendly matches) */
+const AVG_TROPHIES = [1024,1024,968,1092,1036,982,1108,1148,1052,1140,1076,1196,1168,1024,1052,1140,1196,1008,1024,984,968,1012,992,1052,1052];
+
 const RC = {
-  victory: { label:"V", color:"text-green-400",  badge:"bg-green-400/15 text-green-400 border-green-400/30", bar:"from-green-500/20" },
-  defeat:  { label:"D", color:"text-red-400",    badge:"bg-red-400/15   text-red-400   border-red-400/30",   bar:"from-red-500/20"   },
-  draw:    { label:"=", color:"text-slate-400",  badge:"bg-slate-400/15 text-slate-400 border-slate-400/30", bar:"from-slate-500/20" },
+  victory: { label:"Victoire", color:"text-green-400",  badge:"bg-green-500/20 text-green-400 border-green-500/30", glow:"shadow-green-500/10" },
+  defeat:  { label:"Défaite",  color:"text-red-400",    badge:"bg-red-500/20   text-red-400   border-red-500/30",   glow:"shadow-red-500/10"   },
+  draw:    { label:"Égalité",  color:"text-slate-400",  badge:"bg-slate-500/20 text-slate-400 border-slate-500/30", glow:"shadow-slate-500/10" },
 };
 
-/* Render one brawler slot */
-function BrawlerSlot({ p, isMe, align }: { p: BrawlerPlayer; isMe: boolean; align: "left" | "right" }) {
+function BrawlerSlot({ p, isMe, align, size = "md" }: { p: BrawlerPlayer; isMe: boolean; align: "left" | "right"; size?: "sm"|"md" }) {
   const capName = p.b ? p.b.charAt(0) + p.b.slice(1).toLowerCase() : "?";
-  const shortName = p.n.length > 11 ? p.n.slice(0, 10) + "…" : p.n;
+  const shortName = p.n.length > 13 ? p.n.slice(0, 12) + "…" : p.n;
+  const imgSize = size === "md" ? "w-10 h-10" : "w-8 h-8";
+  const nameWidth = size === "md" ? "max-w-[90px]" : "max-w-[70px]";
   return (
-    <div className={`flex items-center gap-1.5 ${align === "right" ? "flex-row-reverse" : ""}`}>
-      <div className={`relative shrink-0 ${isMe ? "ring-2 ring-yellow-400/70 rounded-lg" : ""}`}>
+    <div className={`flex items-center gap-2 ${align === "right" ? "flex-row-reverse" : ""}`}>
+      <div className={`relative shrink-0 ${isMe ? "ring-2 ring-yellow-400/80 rounded-xl" : ""}`}>
         <img src={p.bi ?? ""} alt={capName}
-          className="w-8 h-8 rounded-lg object-contain bg-background/50 border border-border/30 p-0.5"
+          className={`${imgSize} rounded-xl object-contain bg-background/50 border border-border/40 p-0.5`}
           onError={e => { (e.target as HTMLImageElement).style.opacity = "0.3"; }} />
-        {isMe && <Star size={8} className="absolute -top-1 -right-1 text-yellow-400 fill-yellow-400" />}
+        {isMe && <Star size={9} className="absolute -top-1 -right-1 text-yellow-400 fill-yellow-400 drop-shadow" />}
       </div>
       <div className={`min-w-0 ${align === "right" ? "text-right" : ""}`}>
-        <p className={`text-[10px] font-semibold leading-tight truncate max-w-[72px] ${isMe ? "text-yellow-300" : "text-foreground/80"}`}>{shortName}</p>
-        <p className="text-[9px] text-muted-foreground/60 truncate max-w-[72px]">{capName}</p>
+        <p className={`text-[11px] font-semibold leading-tight truncate ${nameWidth} ${isMe ? "text-yellow-300" : "text-foreground/85"}`}>{shortName}</p>
+        <p className={`text-[9px] text-muted-foreground/55 truncate ${nameWidth}`}>{capName}</p>
       </div>
     </div>
   );
 }
 
 export default function StatsPlayer() {
+  const [idx, setIdx] = useState(0);
   const trophyPct = Math.min(100, Math.round((PLAYER.trophies / PLAYER.highestTrophies) * 100));
+
+  const entry = BATTLE_LOG[idx];
+  const result = entry.result ?? "draw";
+  const cfg = RC[result] ?? RC.draw;
+  const myTeamIdx = entry.teamIndex ?? 0;
+  const myTeam = entry.teams[myTeamIdx] ?? [];
+  const oppTeamIdx = myTeamIdx === 0 ? 1 : 0;
+  const oppTeam = entry.teams[oppTeamIdx] ?? [];
+  const avgT = AVG_TROPHIES[idx] ?? 1000;
 
   return (
     <div className="min-h-screen w-full bg-background overflow-hidden">
@@ -158,67 +174,106 @@ export default function StatsPlayer() {
             </div>
           </div>
 
-          {/* ── RIGHT: Battle Log ── */}
+          {/* ── RIGHT: Battle Log (single entry) ── */}
           <div className="lg:col-span-3 rounded-2xl border border-border/50 bg-card/70 backdrop-blur-sm overflow-hidden">
-            <div className="px-5 pt-4 pb-3 flex items-center gap-2 border-b border-border/30">
+
+            {/* Header */}
+            <div className="px-4 pt-4 pb-3 flex items-center gap-2 border-b border-border/30">
               <Swords size={14} className="text-muted-foreground" />
               <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Battle Log</span>
-              <span className="ml-auto text-[10px] text-muted-foreground/60 flex items-center gap-1">
-                <Clock size={10} /> {BATTLE_LOG.length} parties
+              <span className="ml-auto text-[10px] text-muted-foreground/50 flex items-center gap-1">
+                <Clock size={10} /> {timeAgo(entry.battleTime)}
               </span>
             </div>
 
-            <div className="overflow-y-auto max-h-[500px] divide-y divide-border/15">
-              {BATTLE_LOG.map((entry, i) => {
-                const result = entry.result ?? "draw";
-                const cfg = RC[result] ?? RC.draw;
-                const myTeamIdx = entry.teamIndex ?? 0;
-                const myTeam = entry.teams[myTeamIdx] ?? [];
-                const oppTeamIdx = myTeamIdx === 0 ? 1 : 0;
-                const oppTeam = entry.teams[oppTeamIdx] ?? [];
+            {/* Mode + Map name + result */}
+            <div className="px-4 pt-3 pb-2 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className={`text-xs font-bold px-2 py-1 rounded-lg border ${cfg.badge}`}>{cfg.label}</span>
+                <div>
+                  <p className="text-sm font-bold text-foreground leading-tight">{formatMode(entry.event.mode)}</p>
+                  <p className="text-[10px] text-muted-foreground/60">{entry.event.map}</p>
+                </div>
+                {entry.isStarPlayer && <Star size={12} className="text-yellow-400 fill-yellow-400" />}
+              </div>
+              <span className="text-[10px] text-muted-foreground/40 font-mono">{idx + 1} / {BATTLE_LOG.length}</span>
+            </div>
 
-                return (
-                  <div key={i} className={`relative px-3 py-2 bg-gradient-to-r ${cfg.bar} to-transparent`}>
-                    {/* Header row: mode + map + time */}
-                    <div className="flex items-center justify-between mb-1.5">
-                      <div className="flex items-center gap-1.5">
-                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${cfg.badge}`}>
-                          {cfg.label}
-                        </span>
-                        <span className="text-[10px] font-semibold text-foreground/80">{formatMode(entry.event.mode)}</span>
-                        <span className="text-[9px] text-muted-foreground/50">·</span>
-                        <span className="text-[9px] text-muted-foreground/60 truncate max-w-[80px]">{entry.event.map}</span>
-                        {entry.isStarPlayer && <Star size={9} className="text-yellow-400 fill-yellow-400 shrink-0" />}
-                      </div>
-                      <span className="text-[9px] text-muted-foreground/40 shrink-0">{timeAgo(entry.battleTime)}</span>
-                    </div>
+            {/* Main content: team left | big map | team right */}
+            <div className="px-3 pb-3 flex items-center gap-2">
 
-                    {/* Main row: my team | map | opponent team */}
-                    <div className="flex items-center gap-1">
-                      {/* My team (left) */}
-                      <div className="flex flex-col gap-1 flex-1 min-w-0">
-                        {myTeam.map((p, j) => (
-                          <BrawlerSlot key={j} p={p} isMe={p.t === MY_TAG} align="left" />
-                        ))}
-                      </div>
+              {/* My team */}
+              <div className="flex flex-col gap-2 flex-1 min-w-0">
+                {myTeam.map((p, j) => (
+                  <BrawlerSlot key={j} p={p} isMe={p.t === MY_TAG} align="left" size="md" />
+                ))}
+              </div>
 
-                      {/* Map image (center) */}
-                      <div className="shrink-0 mx-1">
-                        <img src={entry.event.mapImage} alt={entry.event.map}
-                          className="w-14 h-14 rounded-lg object-cover border border-border/40 shadow-sm"
-                          onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                      </div>
-
-                      {/* Opponent team (right) */}
-                      <div className="flex flex-col gap-1 flex-1 min-w-0 items-end">
-                        {oppTeam.map((p, j) => (
-                          <BrawlerSlot key={j} p={p} isMe={false} align="right" />
-                        ))}
-                      </div>
+              {/* Map image — big center piece */}
+              <div className="shrink-0 flex flex-col items-center gap-2 mx-1">
+                <img
+                  src={entry.event.mapImage}
+                  alt={entry.event.map}
+                  className="w-28 h-28 rounded-2xl object-cover border-2 border-border/40 shadow-lg"
+                  onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+                />
+                {/* Trophy stats below map */}
+                <div className="flex gap-2">
+                  <div className="flex flex-col items-center bg-accent/30 border border-border/30 rounded-lg px-2 py-1">
+                    <span className="text-[8px] text-muted-foreground/60 uppercase tracking-wide leading-tight">Moy. trophées</span>
+                    <div className="flex items-center gap-0.5">
+                      <Trophy size={9} className="text-yellow-400" />
+                      <span className="text-[11px] font-bold text-foreground">{fmt(avgT)}</span>
                     </div>
                   </div>
-                );
-              })}
+                  <div className="flex flex-col items-center bg-accent/30 border border-border/30 rounded-lg px-2 py-1">
+                    <span className="text-[8px] text-muted-foreground/60 uppercase tracking-wide leading-tight">Gagnés</span>
+                    <div className="flex items-center gap-0.5">
+                      <Trophy size={9} className="text-yellow-400" />
+                      <span className={`text-[11px] font-bold ${entry.trophyChange != null ? cfg.color : "text-muted-foreground"}`}>
+                        {entry.trophyChange != null ? (entry.trophyChange >= 0 ? `+${entry.trophyChange}` : entry.trophyChange) : "Amical"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Opponent team */}
+              <div className="flex flex-col gap-2 flex-1 min-w-0 items-end">
+                {oppTeam.map((p, j) => (
+                  <BrawlerSlot key={j} p={p} isMe={false} align="right" size="md" />
+                ))}
+              </div>
+            </div>
+
+            {/* Navigation */}
+            <div className="px-4 pb-4 flex items-center justify-between border-t border-border/20 pt-3">
+              <button
+                onClick={() => setIdx(i => Math.max(0, i - 1))}
+                disabled={idx === 0}
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors px-3 py-1.5 rounded-lg hover:bg-accent/40"
+              >
+                <ChevronLeft size={14} /> Précédente
+              </button>
+
+              {/* Dots */}
+              <div className="flex gap-1">
+                {BATTLE_LOG.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setIdx(i)}
+                    className={`rounded-full transition-all ${i === idx ? "w-4 h-1.5 bg-foreground" : "w-1.5 h-1.5 bg-muted-foreground/30 hover:bg-muted-foreground/60"}`}
+                  />
+                ))}
+              </div>
+
+              <button
+                onClick={() => setIdx(i => Math.min(BATTLE_LOG.length - 1, i + 1))}
+                disabled={idx === BATTLE_LOG.length - 1}
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors px-3 py-1.5 rounded-lg hover:bg-accent/40"
+              >
+                Suivante <ChevronRight size={14} />
+              </button>
             </div>
           </div>
 
