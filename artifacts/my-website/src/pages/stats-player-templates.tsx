@@ -117,35 +117,6 @@ function BrawlerIcon({ p, isMe, size = "md" }: { p: BrawlerPlayer; isMe: boolean
   );
 }
 
-/* ── MapPanel — map image with overlay info ── */
-function MapPanel({ entry }: { entry: BattleEntry }) {
-  const dur = entry.battle.duration;
-  return (
-    <div className="relative flex-1 min-w-0 min-h-[120px]">
-      <img
-        src={entry.event.mapImage}
-        alt={entry.event.map}
-        className="w-full h-full object-cover"
-        style={{ display: "block" }}
-        onError={e => { (e.target as HTMLImageElement).style.opacity = "0.15"; }}
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
-      <div className="absolute bottom-2 left-3 right-3 flex items-end justify-between">
-        <div>
-          <p className="text-white text-[11px] font-bold drop-shadow leading-tight">{entry.event.map}</p>
-          <p className="text-white/60 text-[9px]">{formatMode(entry.event.mode)}</p>
-        </div>
-        {dur !== null && (
-          <div className="flex items-center gap-0.5 text-white/60 text-[9px]">
-            <Clock size={8} />
-            <span>{Math.floor(dur / 60)}:{String(dur % 60).padStart(2, "0")}</span>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
 /* ── BattleCard ── */
 function BattleCard({ entry, idx, total, onPrev, onNext }: {
   entry: BattleEntry; idx: number; total: number;
@@ -157,6 +128,7 @@ function BattleCard({ entry, idx, total, onPrev, onNext }: {
   const myTeamIdx = entry.teamIndex;
   const myTeam = myTeamIdx !== null ? (entry.teams[myTeamIdx] ?? []) : [];
   const opponentTeam = entry.teams.find((_, i) => i !== myTeamIdx) ?? entry.teams[1] ?? [];
+  const dur = entry.battle.duration;
 
   const allPlayers = entry.teams.flat();
   const avgTr = allPlayers.length > 0
@@ -166,10 +138,48 @@ function BattleCard({ entry, idx, total, onPrev, onNext }: {
   const placement = myTeamIdx !== null ? myTeamIdx + 1 : null;
   const totalTeams = entry.teams.length;
 
+  /* map overlay shared */
+  const mapOverlay = (
+    <>
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent pointer-events-none" />
+      <div className="absolute bottom-2 left-3 right-3 flex items-end justify-between pointer-events-none">
+        <div>
+          <p className="text-white text-[11px] font-bold drop-shadow leading-tight">{entry.event.map}</p>
+          <p className="text-white/60 text-[9px]">{formatMode(entry.event.mode)}</p>
+        </div>
+        {dur !== null && (
+          <div className="flex items-center gap-0.5 text-white/60 text-[9px]">
+            <Clock size={8} />
+            <span>{Math.floor(dur / 60)}:{String(dur % 60).padStart(2, "0")}</span>
+          </div>
+        )}
+      </div>
+    </>
+  );
+
   return (
     <div className="w-full flex flex-col gap-0 rounded-2xl overflow-hidden border border-white/10 bg-card/60 backdrop-blur-sm shadow-xl">
 
-      {/* ── Top bar: résultat + trophées + temps ── */}
+      {/* ── Navigation (en haut) ── */}
+      <div className="flex items-center justify-between px-3 py-2 border-b border-white/5 bg-black/10">
+        <button
+          onClick={onPrev}
+          disabled={idx === 0}
+          className="p-1.5 rounded-xl bg-white/5 hover:bg-white/15 disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
+        >
+          <ChevronLeft size={18} />
+        </button>
+        <span className="text-xs text-muted-foreground font-medium">{idx + 1} / {total}</span>
+        <button
+          onClick={onNext}
+          disabled={idx === total - 1}
+          className="p-1.5 rounded-xl bg-white/5 hover:bg-white/15 disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
+        >
+          <ChevronRight size={18} />
+        </button>
+      </div>
+
+      {/* ── Barre résultat + trophées ── */}
       <div className={`flex items-center justify-between px-4 py-3 ${rs.bg} border-b ${rs.border}`}>
         <div className="flex items-center gap-2 flex-wrap">
           <span className={`w-2 h-2 rounded-full shrink-0 ${rs.dot}`} />
@@ -199,23 +209,23 @@ function BattleCard({ entry, idx, total, onPrev, onNext }: {
       {avgTr !== null && (
         <div className="flex items-center gap-1.5 px-4 py-1.5 border-b border-white/5 bg-white/[0.02]">
           <Trophy size={10} className="text-yellow-400/70" />
-          <span className="text-[10px] text-muted-foreground">Moy. de la partie :</span>
+          <span className="text-[10px] text-muted-foreground">Moy. partie :</span>
           <span className="text-[10px] font-semibold text-foreground/80">{avgTr.toLocaleString("fr-FR")}</span>
         </div>
       )}
 
       {/* ── Corps : brawlers + map ── */}
       {isShowdown ? (
-        /* ── Showdown : toutes les équipes à gauche, map à droite ── */
-        <div className="flex items-stretch">
-          {/* Colonne toutes équipes */}
-          <div className="flex flex-col gap-2 px-2 py-3 shrink-0 overflow-y-auto" style={{ width: 88 }}>
+        /* Showdown : colonne de toutes les équipes à gauche, map à droite */
+        <div className="flex">
+          {/* Colonne équipes — hauteur naturelle */}
+          <div className="flex flex-col gap-1.5 px-2 py-3 shrink-0 bg-black/15" style={{ width: 96 }}>
             {entry.teams.length > 0 ? entry.teams.map((team, ti) => {
               const isMyTeam = ti === myTeamIdx;
               return (
                 <div
                   key={ti}
-                  className={`flex flex-row flex-wrap gap-1 justify-center rounded-lg p-1 ${isMyTeam ? "bg-yellow-400/10 ring-1 ring-yellow-400/30" : "bg-white/[0.03]"}`}
+                  className={`flex flex-row flex-wrap gap-1 justify-center rounded-lg p-1 ${isMyTeam ? "bg-yellow-400/15 ring-1 ring-yellow-400/40" : "bg-white/[0.04]"}`}
                 >
                   {team.map((p, pi) => (
                     <BrawlerIcon key={pi} p={p} isMe={p.t === MY_TAG} size="sm" />
@@ -223,48 +233,52 @@ function BattleCard({ entry, idx, total, onPrev, onNext }: {
                 </div>
               );
             }) : (
-              <p className="text-[9px] text-muted-foreground text-center pt-2">Solo</p>
+              <p className="text-[9px] text-muted-foreground text-center pt-4">Solo</p>
             )}
           </div>
-          {/* Map */}
-          <MapPanel entry={entry} />
+
+          {/* Map — s'étire pour remplir la hauteur de la colonne */}
+          <div className="relative flex-1 min-w-0" style={{ minHeight: 120 }}>
+            <img
+              src={entry.event.mapImage}
+              alt={entry.event.map}
+              className="absolute inset-0 w-full h-full object-cover"
+              onError={e => { (e.target as HTMLImageElement).style.opacity = "0.15"; }}
+            />
+            {mapOverlay}
+          </div>
         </div>
       ) : entry.teams.length >= 2 ? (
-        /* ── Mode classique : équipe gauche | map | équipe droite ── */
-        <div className="flex items-stretch">
-          <div className="flex flex-col items-center justify-center gap-2 px-2 py-3 shrink-0" style={{ width: 68 }}>
+        /* Mode classique 3v3 : équipe gauche | map | équipe droite */
+        <div className="flex">
+          <div className="flex flex-col items-center justify-center gap-2 px-2 py-3 shrink-0 bg-black/15" style={{ width: 72 }}>
             {myTeam.map((p, i) => <BrawlerIcon key={i} p={p} isMe={p.t === MY_TAG} />)}
           </div>
-          <MapPanel entry={entry} />
-          <div className="flex flex-col items-center justify-center gap-2 px-2 py-3 shrink-0" style={{ width: 68 }}>
+          <div className="relative flex-1 min-w-0" style={{ minHeight: 120 }}>
+            <img
+              src={entry.event.mapImage}
+              alt={entry.event.map}
+              className="absolute inset-0 w-full h-full object-cover"
+              onError={e => { (e.target as HTMLImageElement).style.opacity = "0.15"; }}
+            />
+            {mapOverlay}
+          </div>
+          <div className="flex flex-col items-center justify-center gap-2 px-2 py-3 shrink-0 bg-black/15" style={{ width: 72 }}>
             {opponentTeam.map((p, i) => <BrawlerIcon key={i} p={p} isMe={p.t === MY_TAG} />)}
           </div>
         </div>
       ) : (
-        /* ── Fallback : map seule ── */
+        /* Fallback : map seule */
         <div className="relative w-full" style={{ aspectRatio: "16/9" }}>
-          <MapPanel entry={entry} />
+          <img
+            src={entry.event.mapImage}
+            alt={entry.event.map}
+            className="w-full h-full object-cover block"
+            onError={e => { (e.target as HTMLImageElement).style.opacity = "0.15"; }}
+          />
+          {mapOverlay}
         </div>
       )}
-
-      {/* ── Navigation ── */}
-      <div className="flex items-center justify-between px-4 py-3 border-t border-white/5">
-        <button
-          onClick={onPrev}
-          disabled={idx === 0}
-          className="p-2 rounded-xl bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-        >
-          <ChevronLeft size={18} />
-        </button>
-        <span className="text-xs text-muted-foreground">{idx + 1} / {total}</span>
-        <button
-          onClick={onNext}
-          disabled={idx === total - 1}
-          className="p-2 rounded-xl bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-        >
-          <ChevronRight size={18} />
-        </button>
-      </div>
     </div>
   );
 }
