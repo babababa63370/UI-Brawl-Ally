@@ -91,25 +91,26 @@ function getResultStyle(r: "victory" | "defeat" | "draw" | null) {
   return RESULT_STYLE[r ?? "null"];
 }
 
-/* ── PlayerSlot ── */
-function PlayerSlot({ p, isMe, align }: { p: BrawlerPlayer; isMe: boolean; align: "left" | "right" }) {
+/* ── BrawlerIcon — compact icon for side columns ── */
+function BrawlerIcon({ p, isMe, align }: { p: BrawlerPlayer; isMe: boolean; align: "left" | "right" }) {
   const brawlerName = p.b ? p.b.charAt(0) + p.b.slice(1).toLowerCase() : "?";
-  const shortName = p.n.length > 12 ? p.n.slice(0, 11) + "…" : p.n;
+  const shortPseudo = p.n.length > 8 ? p.n.slice(0, 7) + "…" : p.n;
   return (
-    <div className={`flex items-center gap-2 ${align === "right" ? "flex-row-reverse" : ""}`}>
-      <div className={`relative shrink-0 ${isMe ? "ring-2 ring-yellow-400/80 rounded-xl" : ""}`}>
+    <div className={`flex flex-col items-center gap-0.5 ${align === "right" ? "items-center" : "items-center"}`}>
+      <div className={`relative ${isMe ? "ring-2 ring-yellow-400/90 rounded-xl" : ""}`}>
         <img
           src={p.bi ?? ""}
           alt={brawlerName}
-          className="w-9 h-9 rounded-xl object-contain bg-white/5 border border-white/10"
-          onError={e => { (e.target as HTMLImageElement).style.opacity = "0.3"; }}
+          className="w-10 h-10 rounded-xl object-contain bg-white/5 border border-white/10"
+          onError={e => { (e.target as HTMLImageElement).style.opacity = "0.2"; }}
         />
-        {isMe && <Star size={8} className="absolute -top-1 -right-1 text-yellow-400 fill-yellow-400" />}
+        {isMe && (
+          <Star size={8} className="absolute -top-1 -right-1 text-yellow-400 fill-yellow-400 drop-shadow" />
+        )}
       </div>
-      <div className={`min-w-0 ${align === "right" ? "text-right" : ""}`}>
-        <p className={`text-[11px] font-semibold truncate max-w-[80px] ${isMe ? "text-yellow-300" : "text-foreground/80"}`}>{shortName}</p>
-        <p className="text-[9px] text-muted-foreground/50 truncate max-w-[80px]">{brawlerName}</p>
-      </div>
+      <p className={`text-[8px] leading-tight text-center max-w-[44px] truncate ${isMe ? "text-yellow-300 font-semibold" : "text-muted-foreground/70"}`}>
+        {shortPseudo}
+      </p>
     </div>
   );
 }
@@ -120,19 +121,18 @@ function BattleCard({ entry, idx, total, onPrev, onNext }: {
   onPrev: () => void; onNext: () => void;
 }) {
   const rs = getResultStyle(entry.result);
-  const myTeam = entry.teamIndex !== null ? entry.teams[entry.teamIndex] : null;
-  const otherTeams = entry.teams.filter((_, i) => i !== entry.teamIndex);
-  const opponentTeam = otherTeams[0] ?? null;
+  const myTeam = entry.teamIndex !== null ? entry.teams[entry.teamIndex] : entry.teams[0] ?? [];
+  const opponentTeam = entry.teams.find((_, i) => i !== entry.teamIndex) ?? entry.teams[1] ?? [];
   const hasTeams = entry.teams.length >= 2;
   const dur = entry.battle.duration;
 
   return (
     <div className="w-full max-w-sm mx-auto flex flex-col gap-0 rounded-2xl overflow-hidden border border-white/10 bg-card/60 backdrop-blur-sm shadow-xl">
 
-      {/* ── Result bar ── */}
-      <div className={`flex items-center justify-between px-4 py-2.5 ${rs.bg} border-b ${rs.border}`}>
+      {/* ── Top bar: résultat + trophées + temps ── */}
+      <div className={`flex items-center justify-between px-4 py-3 ${rs.bg} border-b ${rs.border}`}>
         <div className="flex items-center gap-2">
-          <span className={`w-2 h-2 rounded-full ${rs.dot}`} />
+          <span className={`w-2 h-2 rounded-full shrink-0 ${rs.dot}`} />
           <span className={`text-sm font-bold ${rs.text}`}>{rs.label}</span>
           {entry.isStarPlayer && (
             <span className="flex items-center gap-0.5 text-yellow-400 text-[10px] font-semibold">
@@ -140,72 +140,77 @@ function BattleCard({ entry, idx, total, onPrev, onNext }: {
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="flex items-center gap-3">
           {entry.trophyChange !== null && (
-            <span className={`font-semibold ${entry.trophyChange >= 0 ? "text-green-400" : "text-red-400"}`}>
-              {entry.trophyChange >= 0 ? "+" : ""}{entry.trophyChange} 🏆
+            <span className={`text-base font-extrabold tracking-tight ${entry.trophyChange >= 0 ? "text-green-400" : "text-red-400"}`}>
+              {entry.trophyChange >= 0 ? "+" : ""}{entry.trophyChange}&nbsp;🏆
             </span>
           )}
-          <span>{timeAgo(entry.battleTime)}</span>
+          <span className="text-[11px] text-muted-foreground">{timeAgo(entry.battleTime)}</span>
         </div>
       </div>
 
-      {/* ── Map image ── */}
-      <div className="relative w-full">
-        <img
-          src={entry.event.mapImage}
-          alt={entry.event.map}
-          className="w-full object-cover"
-          style={{ aspectRatio: "16/9", display: "block" }}
-          onError={e => { (e.target as HTMLImageElement).style.opacity = "0.2"; }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-        <div className="absolute bottom-2 left-3 right-3 flex items-end justify-between">
-          <div>
-            <p className="text-white text-xs font-bold drop-shadow">{entry.event.map}</p>
-            <p className="text-white/70 text-[10px]">{formatMode(entry.event.mode)}</p>
-          </div>
-          {dur !== null && (
-            <div className="flex items-center gap-1 text-white/70 text-[10px]">
-              <Clock size={9} />
-              <span>{Math.floor(dur / 60)}:{String(dur % 60).padStart(2, "0")}</span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ── Teams ── */}
+      {/* ── Map + brawlers ── */}
       {hasTeams ? (
-        <div className="flex items-stretch gap-0 px-3 py-3">
-          {/* My team */}
-          <div className="flex-1 flex flex-col gap-1.5">
-            {(myTeam ?? entry.teams[0]).map((p, i) => (
-              <PlayerSlot key={i} p={p} isMe={p.t === MY_TAG} align="left" />
+        <div className="flex items-stretch">
+          {/* Left team */}
+          <div className="flex flex-col items-center justify-center gap-2 px-2 py-3 shrink-0" style={{ width: 56 }}>
+            {myTeam.map((p, i) => (
+              <BrawlerIcon key={i} p={p} isMe={p.t === MY_TAG} align="left" />
             ))}
           </div>
 
-          {/* VS divider */}
-          <div className="flex flex-col items-center justify-center px-2 gap-1">
-            <div className="w-px flex-1 bg-white/10" />
-            <span className="text-[10px] text-muted-foreground font-bold">VS</span>
-            <div className="w-px flex-1 bg-white/10" />
+          {/* Map image */}
+          <div className="relative flex-1 min-w-0">
+            <img
+              src={entry.event.mapImage}
+              alt={entry.event.map}
+              className="w-full h-full object-cover"
+              style={{ display: "block", minHeight: 100 }}
+              onError={e => { (e.target as HTMLImageElement).style.opacity = "0.2"; }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+            <div className="absolute bottom-2 left-2 right-2">
+              <p className="text-white text-[10px] font-bold drop-shadow leading-tight">{entry.event.map}</p>
+              <div className="flex items-center justify-between">
+                <p className="text-white/60 text-[9px]">{formatMode(entry.event.mode)}</p>
+                {dur !== null && (
+                  <div className="flex items-center gap-0.5 text-white/60 text-[9px]">
+                    <Clock size={8} />
+                    <span>{Math.floor(dur / 60)}:{String(dur % 60).padStart(2, "0")}</span>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
-          {/* Opponent team */}
-          <div className="flex-1 flex flex-col gap-1.5">
-            {(opponentTeam ?? entry.teams[1]).map((p, i) => (
-              <PlayerSlot key={i} p={p} isMe={p.t === MY_TAG} align="right" />
+          {/* Right team */}
+          <div className="flex flex-col items-center justify-center gap-2 px-2 py-3 shrink-0" style={{ width: 56 }}>
+            {opponentTeam.map((p, i) => (
+              <BrawlerIcon key={i} p={p} isMe={p.t === MY_TAG} align="right" />
             ))}
           </div>
         </div>
       ) : (
-        <div className="px-3 py-4 text-center text-xs text-muted-foreground">
-          {formatMode(entry.battle.mode ?? entry.event.mode)}
+        /* Showdown solo — pas d'équipes */
+        <div className="relative w-full">
+          <img
+            src={entry.event.mapImage}
+            alt={entry.event.map}
+            className="w-full object-cover"
+            style={{ aspectRatio: "16/9", display: "block" }}
+            onError={e => { (e.target as HTMLImageElement).style.opacity = "0.2"; }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+          <div className="absolute bottom-2 left-3 right-3">
+            <p className="text-white text-xs font-bold drop-shadow">{entry.event.map}</p>
+            <p className="text-white/60 text-[10px]">{formatMode(entry.event.mode)}</p>
+          </div>
         </div>
       )}
 
       {/* ── Navigation ── */}
-      <div className="flex items-center justify-between px-3 pb-3 pt-1 border-t border-white/5">
+      <div className="flex items-center justify-between px-3 py-2.5 border-t border-white/5">
         <button
           onClick={onPrev}
           disabled={idx === 0}
@@ -213,9 +218,7 @@ function BattleCard({ entry, idx, total, onPrev, onNext }: {
         >
           <ChevronLeft size={16} />
         </button>
-        <span className="text-xs text-muted-foreground">
-          {idx + 1} / {total}
-        </span>
+        <span className="text-xs text-muted-foreground">{idx + 1} / {total}</span>
         <button
           onClick={onNext}
           disabled={idx === total - 1}
